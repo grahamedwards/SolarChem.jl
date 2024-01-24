@@ -3,3 +3,6 @@
 *.jl.mem
 /docs/Manifest.toml
 /docs/build/
+
+_old
+scratch.jl
