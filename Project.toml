@@ -1,7 +1,11 @@
 name = "SolarChem"
 uuid = "9ef18092-565a-42fc-b100-617ad85a4fc1"
 authors = ["Graham Harper Edwards"]
-version = "1.0.0-DEV"
+version = "0.1.0-DEV"
+
+[deps]
+DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+VectorizedStatistics = "3b853605-1c98-4422-8364-4bd93ee0529e"
 
 [compat]
 julia = "1.10"
