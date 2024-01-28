@@ -1,6 +1,5 @@
-using SolarChem
-using Test
+using SolarChem, Test
+using StableRNGs
 
-@testset "SolarChem.jl" begin
-    # Write your tests here.
-end
+@testset "Data Management" begin include("data-mgmt.jl") end
+

@@ -8,27 +8,28 @@ Requires that uncertainties are given as 1σ with keys `:sX` where X is the anal
 
 """
 function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., minuncs::Int=30)
-    assunc = .01float(unc)
+    unc = .01float(unc)
     maxunc = .01float(maxpctunc)
-    @assert assunc < maxunc
+    @assert unc < maxunc
 
     extantuncs = keys(d)[findall(x -> startswith(string(x),"s"),keys(d))]
     analytes = keys(d)[findall(x -> !startswith(string(x),"s"),keys(d))]
-    
-    u = Vector{typeof(assunc)}(undef,length(d[1]))
 
     @inbounds for k in analytes
         sk = Symbol(:s,k)
-        u .= sk ∈ extantuncs ? d[sk] : NaN
+        u = sk ∈ extantuncs ?  d[sk] : fill(NaN,length(d[k]))
 
-        unc = count(!isnan,d[k]) > minuncs ? nanmean(d[sk]./d[k]) : assunc
+        unc = count(!isnan,d[k]) > minuncs ? nanmean(d[sk]./d[k]) : unc
 
-        @inbounds @simd for i = 1:length(d[k])
+        @inbounds @simd for i = eachindex(d[k])
             x, sig = d[k][i], u[i]
             rsig = ifelse(isnan(sig), unc, sig/x ) # convert NaN to assumed uncertainty
             u[i] = x * ifelse( rsig > maxunc, unc, rsig)
         end
-        if sk ∉ extantuncs d = (; zip((keys(d)...,sk), (d..., u))...) end
+        if sk ∉ extantuncs 
+            println(sk)
+            d = (; zip((keys(d)...,sk), (d..., u))...) 
+        end
     end
     d
 end
@@ -63,19 +64,19 @@ e.g.
      0.5
 
 """
-function calcweights(v::Vector; p::Dict=Dict())
+function calcweights(v::Vector; weights::Dict{String,T}=Dict{String,Float64}()) where T <: Number
     
     w  = Vector{Float64}(undef, length(v))
     iᵢ = BitVector(undef, length(v))
     uv = unique(v)
     uw = ones(length(uv))
 
-    if length(p)>0
-        @assert p isa Dict{String, <:Number}
-        uk = unique(keys(p))
-        @inbounds @simd for i in uv
-            i ∉ uk && error("Missing key '$i' in weights")
-            uw[i] = 1/p[i]
+    if length(weights)>0
+        uk = unique(keys(weights))
+        @inbounds @simd for i in eachindex(uv)
+            ii = uv[i]
+            ii ∉ uk && error("Missing key '$ii' in weights")
+            uw[i] = 1/weights[ii]
         end
     end
 
