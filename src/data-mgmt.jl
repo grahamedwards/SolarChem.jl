@@ -2,15 +2,16 @@
 
     estimateuncertainty(d, unc; maxpctunc, minuncs)
 
-Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty. Replaces any values exceeding the maximum percent uncertainty (`maxpctunc`) with `unc`. 
+Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values exceeding the maximum percent uncertainty (`maxpctunc`) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements (with %unc < `maxpctunc`). 
 
 Requires that uncertainties are given as 1σ with keys `:sX` where X is the analyte name (e.g. `:Na` and `:sNa`).
 
 """
 function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., minuncs::Int=30)
-    unc = .01float(unc)
-    maxunc = .01float(maxpctunc)
-    @assert unc < maxunc
+    @assert unc < maxpctunc "Ensure assumed uncertainty is less than the allowed maximum"
+    
+    unc = 0.01float(unc)
+    maxunc = 0.01float(maxpctunc)
 
     extantuncs = keys(d)[findall(x -> startswith(string(x),"s"),keys(d))]
     analytes = keys(d)[findall(x -> !startswith(string(x),"s"),keys(d))]
@@ -19,7 +20,14 @@ function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., 
         sk = Symbol(:s,k)
         u = sk ∈ extantuncs ?  d[sk] : fill(NaN,length(d[k]))
 
-        unc = count(!isnan,d[k]) > minuncs ? nanmean(d[sk]./d[k]) : unc
+        unc = if count(!isnan,d[k]) > minuncs 
+            rsigs = d[sk]./d[k]
+            vmean(rsigs[rsigs .< maxunc])
+        else 
+            unc 
+        end
+
+        @assert unc < maxunc "Mean uncertainty ($(100*unc)%) exceeds maximum allowed. Inspect $sk data. "
 
         @inbounds @simd for i = eachindex(d[k])
             x, sig = d[k][i], u[i]
@@ -27,7 +35,6 @@ function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., 
             u[i] = x * ifelse( rsig > maxunc, unc, rsig)
         end
         if sk ∉ extantuncs 
-            println(sk)
             d = (; zip((keys(d)...,sk), (d..., u))...) 
         end
     end

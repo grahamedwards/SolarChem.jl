@@ -1,8 +1,8 @@
 module SolarChem
 
 using DelimitedFiles: readdlm
-using VectorizedStatistics: vmean
-using NaNStatistics: nanmean
+using VectorizedStatistics: vmean, vmedian
+using NaNStatistics: nanmean, nanmedian
 
 # Write your package code here.
 # include("load-data.jl")
