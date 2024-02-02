@@ -15,6 +15,16 @@ periodictable = (
 
 pts = string.(periodictable," ")
 
+
+"""
+
+    metadata = (:sample,:type,:group)
+
+All metadata names in the NamedTuple generated from Astromat data. 
+
+*Still in development*
+
+"""
 metadata = (:sample,:type,:group)
 
 
