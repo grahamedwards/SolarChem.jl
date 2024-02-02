@@ -14,7 +14,7 @@ function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., 
     maxunc = 0.01float(maxpctunc)
 
     extantuncs = keys(d)[findall(x -> startswith(string(x),"s"),keys(d))]
-    analytes = keys(d)[findall(x -> !startswith(string(x),"s"),keys(d))]
+    analytes = keys(d)[findall(x -> !startswith(string(x),"s") && x ∈ SolarChem.periodictable,keys(d))]
 
     @inbounds for k in analytes
         sk = Symbol(:s,k)
@@ -50,9 +50,62 @@ end
 
 
 
-#####
+"""
 
-# Add a function that removes vector indices based on certain conditions. 
+    trimnans(data, names; alsoinclude = SolarChem.metadata)
+
+Given a NamedTuple of `data`, return only the values and uncertainties of all non-NaN instances of `name` --- a name (::Symbol) or `Tuple` of names from `data`. Also returns the the Vectors corresponding to the fields listed in `alsoinclude`, which is by definition those defined by [`SolarChem.metadata`](@ref).
+
+
+"""
+function trimnans(d::NamedTuple, kz::NTuple{Nkz,Symbol}; alsoinclude::NTuple{Nai,Symbol}=SolarChem.metadata) where {Nkz, Nai}
+
+    @inbounds for k in kz # make sure that uncertainties are included in `outkeys`
+        @assert k ∈ keys(d) "$k is not a name in the supplied dataset."
+        sk = Symbol(:s,k)
+        sk ∈ keys(d) && (kz = (kz...,sk))
+    end
+    
+    n = length(d[kz[1]])
+    notnans = trues(n)
+    
+    @inbounds for k in kz
+        @assert length(d[k]) == n "length of $k is not consistent"
+        @inbounds @simd for i=1:n
+            notnans[i] *= ifelse(isnan(d[k][i]), false, true) 
+        end
+    end
+    outkeys = (alsoinclude..., kz...)
+    (; zip(outkeys, (d[k][notnans] for k in outkeys))...)
+end
+
+trimnans(d::NamedTuple, k::Symbol; alsoinclude::Tuple=SolarChem.metadata) = trimnans(d, (k,), alsoinclude=alsoinclude)
+
+
+
+"""
+
+    pulltopic(data, name, topic[s]; exactmatch=true)
+
+Given a NamedTuple of `data`, returns a NamedTuple with all the names of `data` and only including those rows within under `name` (::Symbol) that contain the provided `topic`(`s`) --- as a String or Tuple of Strings.
+
+"""
+function pulltopic(d::NamedTuple, k::Symbol, topics::NTuple{Nt,String}; exactmatch::Bool=true) where {Nt}
+    
+    n = length(d[k])
+    keepers = falses(n)
+    @inbounds for t=1:Nt
+        @inbounds @simd for i=1:n
+            x= d[k][i]
+            y= topics[t]
+            keepers[i] |= ifelse(exactmatch,isequal(x,y),contains(x,y))
+        end
+    end
+    (; zip(keys(d), (d[k][keepers] for k in keys(d)))...)
+end
+
+pulltopic(d::NamedTuple, k::Symbol, c::String; exactmatch::Bool=true) = pulltopic(d,k,(c,), exactmatch=exactmatch)
+
 
 #####
 

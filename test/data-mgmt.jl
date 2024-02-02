@@ -10,8 +10,8 @@ sFe = vcat(fill(.08*18,20), fill(1.8,17),[NaN,NaN,35])
 
 d = (; Na, sNa = .6Na, Ca, sCa = fill(NaN,length(Ca)), Mg, Fe, sFe)
 
-
 sigpct = 4
+
 dd = estimateuncertainty(d, sigpct)
 @test dd.sMg[1] == .01sigpct*dd.Mg[1] # create sMg 
 @test dd.sNa[1] == .01sigpct*dd.Na[1] # correct uncs > maxpctunc
@@ -22,12 +22,19 @@ isnan(last(dd.sNa)) # NaN unc for NaN measurements.
     
 v = ["a", "b", "a", "c",  "b", "a"]
 
-@test calcweights(v) ≈ [1/3, 0.5, 0.1/3, 1.0, 0.5, 1/3]
-
+@test calcweights(v) ≈ [1/3, 0.5, 1/3, 1.0, 0.5, 1/3]
 @test calcweights(v, weights = Dict("a" => 1/3, "b" => 1/2, "c" => 1.0)) == ones(6)
 
+sample = type = group = v
+
+d = estimateuncertainty((; sample, type, group, Na, Ca, Mg), sigpct)
+
+@test trimnans(d,:Na).sample == ["a", "a", "c", "b"]
+@test trimnans(d,:Na).Na == Na[.!isnan.(Na)]
+@test trimnans(d,(:Na,:Mg)).Mg == Mg[.!isnan.(Na) .* .!isnan.(Mg)]
 
 
-
-
-
+@test pulltopic(d, :group, "c").group == ["c"]
+@test pulltopic(d, :group, ("b","c")).group == ["b", "c", "b"]
+group[1] = "bc"
+@test pulltopic(d, :group, "c", exactmatch=false).group == ["bc", "c"]

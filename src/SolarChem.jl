@@ -5,10 +5,10 @@ using VectorizedStatistics: vmean, vmedian
 using NaNStatistics: nanmean, nanmedian
 
 # Write your package code here.
-# include("load-data.jl")
+include("load-data.jl")
 # include(resamplers.jl"")
 
-export calcweights, estimateuncertainty
+export calcweights, estimateuncertainty, trimnans, trimtopic, pulltopic
 include("data-mgmt.jl")
 
 end
