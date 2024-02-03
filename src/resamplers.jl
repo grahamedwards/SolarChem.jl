@@ -3,16 +3,16 @@
 ## Bootstrap resampler function
 # This assumes a gaussian analytical distribution
 
-function bootstrapresample(n::Int64,data::Vector,sigma::Vector,weights::Vector; )
+function bootstrapresample(n::Int64,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
     @assert length(data) == length(sigma) == length(weights)
     wₛ = cumsum(weights)
     
     resampled = similar(data, n)
     #rows = Vector{Int}(undef, n)
     @inbounds @simd for i = 1:n
-        row = searchsortedfirst(wₛ, rand())
+        row = searchsortedfirst(wₛ, rand(rng))
         #rows[i] = row
-        resampled[i] = data[row] + randn()*sigma[row]
+        resampled[i] = data[row] + randn(rng)*sigma[row]
     end
     resampled # (resampled,rows)
 end
@@ -20,7 +20,7 @@ end
 # Resample the dataset (randomly) with replacement
     # Calculate mean of new dataset, repeat "nrs" times
     # This assumes a gaussian analytical distribution
-function bootstrapmean(n::Int64,data::Vector,sigma::Vector,weights::Vector)
+function bootstrapmean(n::Int64,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
     @assert length(data) == length(sigma) == length(weights)
     nd = length(data)
     wₛ = cumsum(weights) 
@@ -28,15 +28,18 @@ function bootstrapmean(n::Int64,data::Vector,sigma::Vector,weights::Vector)
     means = Vector{eltype(data)}(undef,nrs)
     @inbounds for h = 1:n
         μ = zero(eltype(means))
-        @inbounds for i = 1:nd
-            row = searchsortedfirst(wₛ, rand()*last(wₛ))
-            μ += data[row] + randn()*sigma[row]
+        @inbounds @simd for i = 1:nd
+            row = searchsortedfirst(wₛ, rand(rng)*last(wₛ))
+            μ += data[row] + randn(rng)*sigma[row]
         end
         means[h] = μ/nd
     end
     means
 end
 
+
+
+#=
 ## resample elemental compositions or ratios with weights and option of population abundances.
     #Replacement for simpleweightedresample
 function weightedresample(df::DataFrame,vars::Vector{Symbol};
@@ -117,9 +120,9 @@ function bootstrapratio(nrs::Int64,num::AbstractVector,denom::AbstractVector,wei
         if fraction
             @inbounds for i = 1:nrs
                 @inbounds for j=1:length(num)
-                    row = searchsortedfirst(wₛ, rand()*last(wₛ))
-                    x = num[row] + randn()*num_sigma[row]
-                    rsds[j] =  x / (x+ denom[row] + randn() * denom_sigma[row])
+                    row = searchsortedfirst(wₛ, rand(rng)*last(wₛ))
+                    x = num[row] + randn(rng)*num_sigma[row]
+                    rsds[j] =  x / (x+ denom[row] + randn(rng) * denom_sigma[row])
                 end
                 μᵣₛ = mean(rsds)
                 resampled[i] = μᵣₛ / (1-μᵣₛ)
@@ -127,9 +130,9 @@ function bootstrapratio(nrs::Int64,num::AbstractVector,denom::AbstractVector,wei
         else #calculate as ratios
             @inbounds for i = 1:nrs
                 @inbounds for j=1:length(num)
-                    row = searchsortedfirst(wₛ, rand()*last(wₛ))
-                    rsds[j] =  (num[row] + randn()*num_sigma[row]) /
-                        (denom[row] + randn() * denom_sigma[row])
+                    row = searchsortedfirst(wₛ, rand(rng)*last(wₛ))
+                    rsds[j] =  (num[row] + randn(rng)*num_sigma[row]) /
+                        (denom[row] + randn(rng) * denom_sigma[row])
                 end
                 resampled[i] = vmean(rsds)
             end
@@ -138,17 +141,17 @@ function bootstrapratio(nrs::Int64,num::AbstractVector,denom::AbstractVector,wei
     #rows = similar(num, Int64, nrs)
         if fraction
             @inbounds for i = 1:nrs
-                row = searchsortedfirst(wₛ, rand()*last(wₛ))
+                row = searchsortedfirst(wₛ, rand(rng)*last(wₛ))
                 #rows[i] = row
-                x = num[row] + randn()*num_sigma[row]
-                resampled[i] =  x / (x + denom[row] + randn() * denom_sigma[row])
+                x = num[row] + randn(rng)*num_sigma[row]
+                resampled[i] =  x / (x + denom[row] + randn(rng) * denom_sigma[row])
             end
         else
             @inbounds for i = 1:nrs
-                row = searchsortedfirst(wₛ, rand()*last(wₛ))
+                row = searchsortedfirst(wₛ, rand(rng)*last(wₛ))
                 #rows[i] = row
-                resampled[i] =  (num[row] + randn()*num_sigma[row]) /
-                    (denom[row] + randn() * denom_sigma[row])
+                resampled[i] =  (num[row] + randn(rng)*num_sigma[row]) /
+                    (denom[row] + randn(rng) * denom_sigma[row])
             end
         end
     end
@@ -178,6 +181,8 @@ function wrstype(df::DataFrame,vars::Vector{Symbol};
     end
     return (types,rs_out,nₜ)
 end
+
+=#
 
 #= Weighted Resampling Function
 
