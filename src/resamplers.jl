@@ -11,7 +11,7 @@ Returns a Vector of `n` random samples from dataset `x` with (normally distribut
 Optionally provide a (pseudo)random number generator `rng` (default: Xoshiro256++).
 
 """
-function bootstrapresample(n::Int64,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
+function bootstrapresample(n::Int,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
     @assert length(data) == length(sigma) == length(weights)
     wₛ = cumsum(weights)
     wₛ ./= last(wₛ)
@@ -40,7 +40,7 @@ Returns a Vector of `n` means, each calculated from a random resampling of datas
 Optionally provide a (pseudo)random number generator `rng` (default: Xoshiro256++).
 
 """
-function bootstrapmean(n::Int64,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
+function bootstrapmean(n::Int,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
     @assert length(data) == length(sigma) == length(weights)
     nd = length(data)
     wₛ = cumsum(weights) 
