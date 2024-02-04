@@ -11,6 +11,8 @@ VectorizedStatistics = "3b853605-1c98-4422-8364-4bd93ee0529e"
 
 [compat]
 DelimitedFiles = "1"
+NaNStatistics = "0.6"
+VectorizedStatistics = "0.5"
 julia = "1.10"
 
 [extras]
