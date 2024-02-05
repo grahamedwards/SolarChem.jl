@@ -1,7 +1,6 @@
 module SolarChem
 
-import Random
-using DelimitedFiles: readdlm
+import Random, DelimitedFiles
 using VectorizedStatistics: vmean, vmedian
 using NaNStatistics: nanmean, nanmedian
 
