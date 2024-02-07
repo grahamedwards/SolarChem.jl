@@ -4,7 +4,9 @@ import Random, DelimitedFiles
 using VectorizedStatistics: vmean, vmedian
 using NaNStatistics: nanmean, nanmedian
 
-# Write your package code here.
+
+include("helpful-tuples.jl")
+
 include("load-data.jl")
 
 export bootstrapmean, bootstrapresample

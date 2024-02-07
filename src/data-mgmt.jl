@@ -14,7 +14,7 @@ function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., 
     maxunc = 0.01float(maxpctunc)
 
     extantuncs = keys(d)[findall(x -> startswith(string(x),"s"),keys(d))]
-    analytes = keys(d)[findall(x -> !startswith(string(x),"s") && x ∈ SolarChem.periodictable,keys(d))]
+    analytes = keys(d)[findall(x -> !startswith(string(x),"s") && x ∈ SolarChem.periodictable(),keys(d))]
 
     @inbounds for k in analytes
         sk = Symbol(:s,k)
@@ -58,7 +58,7 @@ Given a NamedTuple of `data`, return only the values and uncertainties of all no
 
 
 """
-function trimnans(d::NamedTuple, kz::NTuple{Nkz,Symbol}; alsoinclude::NTuple{Nai,Symbol}=SolarChem.metadata) where {Nkz, Nai}
+function trimnans(d::NamedTuple, kz::NTuple{Nkz,Symbol}; alsoinclude::NTuple{Nai,Symbol}=SolarChem.metadata()) where {Nkz, Nai}
 
     @inbounds for k in kz # make sure that uncertainties are included in `outkeys`
         @assert k ∈ keys(d) "$k is not a name in the supplied dataset."
@@ -79,7 +79,7 @@ function trimnans(d::NamedTuple, kz::NTuple{Nkz,Symbol}; alsoinclude::NTuple{Nai
     (; zip(outkeys, (d[k][notnans] for k in outkeys))...)
 end
 
-trimnans(d::NamedTuple, k::Symbol; alsoinclude::Tuple=SolarChem.metadata) = trimnans(d, (k,), alsoinclude=alsoinclude)
+trimnans(d::NamedTuple, k::Symbol; alsoinclude::Tuple=SolarChem.metadata()) = trimnans(d, (k,), alsoinclude=alsoinclude)
 
 
 
