@@ -1,17 +1,17 @@
 """
 
-    estimateuncertainty(d, unc; maxpctunc, minuncs)
+    estimateuncertainty(d, unc; uncextrema, minuncs)
 
-Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values exceeding the maximum percent uncertainty (`maxpctunc`) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements (with %unc < `maxpctunc`). 
+Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values outside the bounds of the minimum and maximum percent uncertainty (`uncextrema`) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements (with %unc ∈ uncextrema = (0.01, 50) by default).
 
 Requires that uncertainties are given as 1σ with keys `:sX` where X is the analyte name (e.g. `:Na` and `:sNa`).
 
 """
-function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., minuncs::Int=30)
-    @assert unc < maxpctunc "Ensure assumed uncertainty is less than the allowed maximum"
+function estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.01, 50.), minuncs::Int=30)
+    @assert uncextrema[1] < unc < uncextrema[2] "Ensure assumed uncertainty is within defined range of uncextrema"
     
     unc = 0.01float(unc)
-    maxunc = 0.01float(maxpctunc)
+    minunc, maxunc = 0.01 .* float.(uncextrema)
 
     extantuncs = keys(d)[findall(x -> startswith(string(x),"s"),keys(d))]
     analytes = keys(d)[findall(x -> !startswith(string(x),"s") && x ∈ SolarChem.periodictable(),keys(d))]
@@ -22,17 +22,18 @@ function estimateuncertainty(d::NamedTuple, unc::Number; maxpctunc::Number=50., 
 
         unc = if count(!isnan,d[k]) > minuncs 
             rsigs = d[sk]./d[k]
-            vmean(rsigs[rsigs .< maxunc])
+            vmean(rsigs[minunc .< rsigs .< maxunc])
         else 
             unc 
         end
 
-        @assert unc < maxunc "Mean uncertainty ($(100*unc)%) exceeds maximum allowed. Inspect $sk data. "
+        @assert unc < maxunc "Mean uncertainty ($(100*unc)%) exceeds maximum allowed ($(uncextrema[2])%). Inspect $sk data. "
+        @assert unc > minunc "Mean uncertainty ($(100*unc)%) less than minimum allowed ($(uncextrema[1])%). Inspect $sk data. "
 
         @inbounds @simd for i = eachindex(d[k])
             x, sig = d[k][i], u[i]
             rsig = ifelse(isnan(sig), unc, sig/x ) # convert NaN to assumed uncertainty
-            u[i] = x * ifelse( rsig > maxunc, unc, rsig)
+            u[i] = x * ifelse(minunc < rsig < maxunc, rsig, unc)
         end
         if sk ∉ extantuncs 
             d = (; zip((keys(d)...,sk), (d..., u))...) 
