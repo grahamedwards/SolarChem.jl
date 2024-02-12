@@ -1,5 +1,5 @@
 using SolarChem, Test
-using StableRNGs
+using StableRNGs, Suppressor
 
 @testset "Load Data" begin include("load-data.jl") end
 @testset "Data Management" begin include("data-mgmt.jl") end

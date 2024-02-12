@@ -25,11 +25,11 @@ v = ["a", "b", "a", "c",  "b", "a"]
 @test calcweights(v) ≈ [1/3, 0.5, 1/3, 1.0, 0.5, 1/3]
 @test calcweights(v, weights = Dict("a" => 1/3, "b" => 1/2, "c" => 1.0)) == ones(6)
 
-sample = type = group = v
+name = type = group = comment = citation = dataset =v
 
-d = estimateuncertainty((; sample, type, group, Na, Ca, Mg), sigpct)
+d = estimateuncertainty((; name, type, group, comment, citation, dataset, Na, Ca, Mg), sigpct)
 
-@test trimnans(d,:Na).sample == ["a", "a", "c", "b"]
+@test trimnans(d,:Na).name == ["a", "a", "c", "b"]
 @test trimnans(d,:Na).Na == Na[.!isnan.(Na)]
 @test trimnans(d,(:Na,:Mg)).Mg == Mg[.!isnan.(Na) .* .!isnan.(Mg)]
 

@@ -28,13 +28,13 @@ const strelements = string.(periodictable()," ")
 
 """
 
-    metadata = (:sample,:type,:group)
+    metadata = (:name,:type,:group)
 
 Return a Tuple of metadata names in the NamedTuple generated from Astromat data. 
 *Still in development*.
 
 """
-metadata() = (:sample,:type,:group)
+metadata() = (:name, :type, :group, :comment, :citation, :dataset)
 
 
 """

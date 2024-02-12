@@ -7,6 +7,7 @@ using NaNStatistics: nanmean, nanmedian
 
 include("helpful-tuples.jl")
 
+export loadastromatdata
 include("load-data.jl")
 
 export bootstrapmean, bootstrapresample

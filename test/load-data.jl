@@ -43,4 +43,13 @@
 @test SolarChem.assigntype("H-IMP") == (7,)
 @test SolarChem.assigntype("CM-AN") == (0,)
 @test SolarChem.assigntype("H-AN") == (0,)
+@test SolarChem.assigntype("H3-AN") == (3,)
 
+
+@test SolarChem.unitconversionfactor.("Ca" .* ("wt%", "%", "%m/m", "mg/g", "μg/g", "ppm", "ppb", "ng/g", "pg/g")) == (0.01, 0.01, 0.01, 0.001, 1.0e-6, 1.0e-6, 1.0e-9, 1.0e-9, 1.0e-12)
+@test @suppress_err isnan(SolarChem.unitconversionfactor("boop"))
+
+@test SolarChem.readvalue(1) == 1.
+@test SolarChem.readvalue(2.3) == 2.3
+@test isnan(SolarChem.readvalue(""))
+@test SolarChem.readvalue("1.2e8") == 1.2e8
