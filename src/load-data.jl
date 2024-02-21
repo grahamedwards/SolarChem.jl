@@ -21,7 +21,7 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
     n = length(ni)
 
     group = group_[ni]
-    type = SolarChem.assigntype.(taxonName[ni])
+    type::Vector{Tuple{Vararg{Int}}} = SolarChem.assigntype.(taxonName[ni])
     name = string.(x[ni,findfirst(x -> x=="sample", headers)])
     comment = string.(x[ni, findfirst(x -> x=="analysisComment", headers)])
     citation = string.(x[ni,findfirst(x -> x=="citation_url", headers)])
@@ -33,7 +33,7 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
 
     oxideconversion = (; Ca= 40.078/(40.078 + 15.999), Na = 2* 22.989769 / (2* 22.989769 + 15.999), Ni = 58.6934 / (58.6934 + 15.999), Mg = 24.305 / (24.305 + 15.999), Co = 58.933195 / (58.933195 + 15.999), Fe = 55.845 / (55.845 + 15.999), Si = 28.0855 / (28.0855 + 2* 15.999), Al = 2* 26.981539 / (2* 26.981539 + 3* 15.999), Mn = 54.938044 / (54.938044 + 15.999), Cr = 2* 51.9961 / (2* 51.9961 + 3* 15.999), Ti = 47.867 / (47.867 + 2* 15.999), K = 2* 39.0983 / (2* 39.0983 + 15.999), P = 2* 30.973762 / (2* 30.973762 + 5* 15.999), Fe3 = 2* 55.845 / (2* 55.845 + 3* 15.999))
 
-    uncs = ("1S",  "REL", "2S", "2S-ABS", "S-REL")
+    uncertaintynames = ("1S",  "REL", "2S", "2S-ABS", "S-REL")
 
     hbv = BitVector(undef,length(headers))
 
@@ -46,8 +46,8 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
         sv = copy(v)
         elstr = SolarChem.strelements[i]
 
-        # Identify all measurement and uncertainty headers
-        @inbounds @simd for ii = eachindex(hbv)
+# Identify all measurement and uncertainty headers
+        @inbounds for ii = eachindex(hbv)
             header = headers[ii]
             b  = contains(header, elstr)
             if el ∈ keys(oxides)
@@ -56,7 +56,13 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
                     b |= contains(header,oxides.Fe3)
                 end
             end
-            
+
+            if el == :O # ensure oxides are not counted as O measurements
+                @inbounds for ox in oxides
+                    b &= !contains(header, ox)
+                end
+            end
+# Exclude all elemental headers with lab, comment, or method descriptors --- these do not contain numerical chemical data.
             b &= !contains(header, "lab")
             b &= !contains(header,"method")
             b &= !contains(header,"comment")
@@ -65,7 +71,7 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
 
         heads = findall(hbv)
 
-        for j ∈ eachindex(heads)
+        @inbounds for j ∈ eachindex(heads)
 
             ij = heads[j]
 
@@ -73,43 +79,48 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
             xx = view(x,:,ij)
 
             cf = SolarChem.unitconversionfactor(header)
+
+# Convert from oxide to elemental.
             if el ∈ keys(oxides)
-                cf *= ifelse(contains(header, "Fe2O3"), oxideconversion[:Fe3], oxideconversion[el])
+                cf *= ifelse(contains(header, "Fe2O3"), oxideconversion.Fe3, oxideconversion[el])
             end
 
-            iunc = findfirst(contains.(header,uncs))
-
-            if isnothing(iunc) # if header is not an uncertainty class....
+# If header is not an uncertainty, just read values as numbers or nans.
+# else if header is an uncertainty, identify it and calculate it.
+            if iszero(sum(contains.(header,uncertaintynames))) # if header is not an uncertainty class....
 
                 @inbounds for k = 1:n
                     r = SolarChem.readvalue(xx[ni[k]]) * cf
-                    vk = v[k]
+                    vk = el == :Fe ? v[k]+ifelse(isnan(r),0,r) : v[k]
                     v[k] = ifelse(isnan(vk), r, vk) 
                 end
             else 
                 includesuncs = true
                 uncfactor = ifelse(occursin("2S",header),0.5,1)
+# For relative uncertainties
                 if contains(header,"REL")
                     @inbounds for k = 1:n
-                        r = SolarChem.readvalue(xx[ni[i]]) * v[k] * uncfactor
-                        svk = sv[k]
-                        sv[k] = ifelse(isnan(svk), r, svk) 
-                        # requires that v has already been filled, for this cell, which should be the case
+                        r = SolarChem.readvalue(xx[ni[k]]) * v[k] * uncfactor # requires that v has already been filled, for this cell, which should be the case
+                        svk = sv[k]  
+                        sv[k] = ifelse(isnan(r), svk, r) # overwite whatever's there with the new relative uncertainty.
                     end
+# For absolute uncertainties
                 else
                     @inbounds for k = 1:n
-                        r = SolarChem.readvalue(xx[ni[i]]) * cf * uncfactor
-                        svk = sv[k]
+                        r = SolarChem.readvalue(xx[ni[k]]) * cf * uncfactor
+                        svk = el == :Fe ? sqrt(sv[k]^2 + ifelse(isnan(r),0,r*r)) : sv[k] # for conditions where there might already be a value there (Fe), add in quadrature
                         sv[k] = ifelse(isnan(svk), r, svk) 
                     end
                 end
             end
         end
-        # Add new data to output NamedTuple:
-        if includesuncs
-            out = (; zip((keys(out)...,el, Symbol(:s,el)), (out..., v, sv))...)
-        else
-            out = (; zip((keys(out)..., el), (out..., v))...)
+        # Add new data to output NamedTuple, if there is any:
+        if countnotnans(v) > 0
+            if includesuncs
+                out = (; zip((keys(out)...,el, Symbol(:s,el)), (out..., v, sv))...)
+            else
+                out = (; zip((keys(out)..., el), (out..., v))...)
+            end
         end
     end 
     return out
@@ -147,7 +158,7 @@ function unitconversionfactor(s::AbstractString)
     
     f = ifelse(occursin("pg/g",s), 1e-12, f)
 
-    isnan(f) && @warn "No unit identified for heading: $s"
+    isnan(f) && @warn "No unit identified for heading: $s  [excluded from dataset]"
 
     f
 end
@@ -184,7 +195,7 @@ function assigntype(v::AbstractString)
     end
 
     c = c2 = parse(Int,v[i])
-()
+
     if contains(v, '-') 
         ic2 = findfirst(x -> x=='-',v )+1
         isdigit(v[ic2]) && (c2 = parse(Int,v[ic2]))
@@ -284,3 +295,15 @@ isCO(v::AbstractString) =  0 < sum(contains.(v, ("CO1", "CO2", "CO3")))
 isCung(v::AbstractString) = 0 < sum(contains.(v,("C-UNG", "C1", "C2", "C3", "C4")))
 
 # unique(taxonName) =["LL3 CHONDRITE", "H4", "H3", "H6", "C-UNG", "H5", "L3", "CM", "DIOGENITE", "EUCRITE-MMICT", "EUCRITE", "H3.3 CHONDRITE", "CH3", "H3.0", "CK5", "EL3 CHONDRITE", "CM2", "ANGRITE", "EUCRITE-CM", "ACHONDRITE-UNG", "CR2", "", "UREILITE", "R4", "STONE-UNCL", "LUNAR", "EH4 CHONDRITE", "CV3", "CO3.5", "R3.8-5", "CO3.7", "L6", "E4", "EL5 CHONDRITE", "CI1", "L/LL4", "IRON-IVA", "LL5 CHONDRITE", "LL3.2/3.4 CHONDRITE", "EUCRITE (POLYMICT)", "H6 CHONDRITE", "L6 CHONDRITE", "L5 CHONDRITE", "CO3.6 CHONDRITE", "SHERGOTTITE", "L3.5 CHONDRITE", "L3.4 CHONDRITE", "L3.7-3.9 CHONDRITE", "MESOSIDERITE", "L3-6 CHONDRITE", "IRON-UNGROUPED", "EH3 CHONDRITE", "H3.7 CHONDRITE", "LL3.7 CHONDRITE", "CO3.0 CHONDRITE", "H3.9 CHONDRITE", "AUBRITE", "NIPR COLLECTION", "EUCRITE (UNBRECCIATED)", "CV3 CHONDRITE", "LUNAR-ANORTH. BRECCIA", "EL6 CHONDRITE", "ACAPULCOITE", "CM2 CHONDRITE", "CO3.4 CHONDRITE", "H5 CHONDRITE (IN ICE)", "H5 CHONDRITE", "UREILITE (AUG-BEARING)", "CK4 CHONDRITE", "L4 CHONDRITE", "LL3.2/3.5 CHONDRITE", "L3.4-3.7 CHONDRITE", "LL3.3 CHONDRITE", "LL6 CHONDRITE", "CM1/2 CHONDRITE", "CO3.5 CHONDRITE", "MARTIAN (OPX)", "SNC ORTHOPYROXENITE", "H4 CHONDRITE", "BRACHINITE", "L3.8 CHONDRITE", "LL3.4 CHONDRITE", "IRON-IIIAB", "L3.9 CHONDRITE", "EUCRITE (MG-RICH)", "H3.5-4 CHONDRITE", "CH3 CHONDRITE", "R3.6 CHONDRITE", "H4/5", "H3.5 CHONDRITE", "H3.4 CHONDRITE", "H5/6", "CHONDRITE-UNCL", "L3.7 CHONDRITE", "IRON, IAB-MG", "EUCRITE-PMICT", "L5", "CO3.6", "MARTIAN (SHERGOTTITE)", "L3.6 CHONDRITE", "MESOSIDERITE-B1", "L4", "CO3.0", "HOWARDITE", "L3.2 CHONDRITE", "LL3.5 CHONDRITE", "L3.7-4 CHONDRITE", "EUCRITE-UNBR", "CV3-AN", "LUNAR (ANORTH)", "H3.6 CHONDRITE", "LUNAR (GABBRO)", "EH4", "C2-UNG", "LL4 CHONDRITE", "EH4/5", "LL3.15", "LL3.9", "H/L3.9", "OC", "LL6 CHON. (BRECCIA)", "CR2 CHONDRITE", "CO3 CHONDRITE", "L/LL6", "CK3", "IRON-IVB", "CO3", "R3.8", "CK4", "MARTIAN (CHASSIGNITE)", "R3.5-6", "C3-UNG", "CK4/5", "EL4 CHONDRITE", "UREILITE-PMICT", "R3-4", "CK3-AN", "H-IMP MELT", "H3.8 CHONDRITE", "H~6", "LUNAR-BASALT", "H5-6 CHONDRITE", "CO3 CHONDRITE (ANOMALOUS)", "H5-7", "IRON, IIAB", "LUNAR (FELDSP. BRECCIA)", "UREILITE (POLYMICT)", "CK5 CHONDRITE", "IRON-IAB", "CM1 CHONDRITE", "C2 CHONDRITE UNGROUPED", "IRON-IIE (ANOMALOUS)", "L3.3-3.6 CHONDRITE", "ACAPULCOITE/LODRANITE", "IRON-IAB (ANOMALOUS)", "LUNAR-BASALTIC BRECCIA", "EUCRITE (BRECCIATED)", "UREILITE (POLYMICT ?)", "CK5/6 CHONDRITE", "L3.0 CHONDRITE", "CV3 CHONDRITE (REDUCED)", "H4 CHONDRITE (ANOMALOUS)", "EH4/5 CHONDRITE", "L/LL3.2 CHONDRITE", "TERRESTRIAL ROCK", "IRON-IIE", "CO3.3", "LODRANITE", "CR", "ACHON. UNGROUPED", "DIOGENITE (OLIVINE)", "EL4/5", "IRON-OCTAHEDRITE", "CHONDRITE UNGROUPED", "DIOGENITE (UNIQUE)", "CM CHONDRITE (ANOMALOUS)", "CR1 CHONDRITE", "LL3.8 CHONDRITE", "IRON, IAB-UNG", "L5-6", "C4-UNG", "WINONAITE", "CBB", "EL6/7", "L3.7-6", "R3-6", "EL7", "L/LL3.4", "CO3.8", "CO3.2", "K3", "L/LL5", "LL3.2", "R CHONDRITE", "H CHONDRITE (IMPACT MELT)", "L CHONDRITE (IMPACT MELT)", "R4 CHONDRITE", "CM1-2 CHONDRITE", "AUBRITE (ANOMALOUS)", "R6 CHONDRITE", "LUNAR (BASALT)", "LL5", "UREILITE (ANOMALOUS)", "CK6 CHONDRITE", "C3 CHONDRITE UNGROUPED", "L3.1 CHONDRITE", "L3.2-3.5 CHONDRITE", "E3 CHONDRITE (ANOMALOUS)", "CHON. (KAKANGARI-LIKE)", "EH5 CHONDRITE", "L5/6", "L(LL)3.05 CHONDRITE", "CV3 CHONDRITE (ANOMALOUS)", "R3 CHONDRITE", "L3.10 CHONDRITE", "NAKHLITE", "CB CHONDRITE", "LUNAR-FELDSPATHIC BRECCIA", "H5 CHONDRITE (ANOMALOUS)", "CR3 CHONDRITE", "CHONDRITE-UNG", "CM1", "CV2", "MARTIAN (NAKHLITE)", "IRON, IID-AN", "LL3.6 CHONDRITE", "CM-AN", "UNKNOWN", "MARTIAN (POLYMICT BRECCIA)", "R3/4", "R3", "CK5/6", "R3.9", "R5", "DIOGENITE-AN", "H", "ENST ACHON", "MARTIAN", "EUCRITE-AN", "DIOGENITE-PM", "LL5/6 CHONDRITE", "LL3.1", "LL3.05", "DIOGENITE-OLIVINE", "R3.7", "MARTIAN (AUGITE BASALT)", "H4-6 CHONDRITE", "C3", "CM1/2", "ACHONDRITE-PRIM", "E6", "CO3.4", "CH CHONDRITE", "CK3 CHONDRITE", "R3.8-6 CHONDRITE", "CBA", "ENSTATITE METEORITE UNGR", "CBB CHONDRITE", "CV3.4", "EUCRITE-BR", "H3.2-3.7", "MESOSIDERITE-AN", "L3.6-4 CHONDRITE", "R3.8-6", "R3-5", "KREEP BASALT", "H-METAL", "LL3.00", "L6/7", "H3-6", "C", "H/L3.6", "LL3.1-3.5 CHONDRITE", "H3-4", "LL7 CHONDRITE", "LODRANITE-AN", "H-AN", "LL3.0", "H7", "L4/5", "EH", "LL", "IRON, IIIAB", "IRON, IIE-AN", "H3/4", "E5-AN", "IRON, IAB COMPLEX", "EH6-AN", "H3.2-AN", "C1/2-UNG", "EH-IMP MELT", "CK6", "EH6 CHONDRITE", "PALLASITE, UNGROUPED", "R6"]
+
+
+
+
+# from_astromat = [:Fe, :As, :Cu, :Mn, :Ca, :Mg, :Zn, :S, :Al, :FeOT, :NiO, :FeS, :Fe2O3, :SO2, :Cr, :Ti, :Na, :P, :CARBONATE, :Fe2P, :Fe3P, :CoO, :K, :Cd, :Fe2O3T, :LOI, :Si, :Ag, :MoO3, :SO3, :V2O3, :BaO, :ST, :TiO, :ZrO2, :Ir, :Ga, :Ni, :Au, :Cr, :Co, :As, :Ge, :W, :Re, :Pt, :Cu, :Sb, :Sc, :K, :Zn, :V, :Se, :Os, :Hf, :Na, :Sr, :Ca, :C, :N, :Fe, :Mn, :Ru, :Rb, :Th, :U, :Zr, :Br, :Al, :Mg, :Ta, :Cs, :Pd, :Ti, :Te, :Y, :Cd, :Nb, :Mo, :Li, :Ag, :Tl, :Bi, :In, :Pb, :Sn, :P, :I, :S, :Si, :Be, :Rh, :B, :Hg, :Ba, :Sm, :Lu, :Yb, :La, :Eu, :Nd, :Cd, :Tb, :Ba, :Dy, :Ho, :Gd, :Er, :Pr, :Tm]
+
+# elements = [:Li, :Be, :B, :C, :N, :Na, :Mg, :Al, :Si, :P, :S, :K, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn, :Ga, :Ge, :As, :Se, :Br, :Rb, :Sr, :Y, :Zr, :Nb, :Mo, :Ru, :Rh, :Pd, :Ag, :Cd, :In, :Sn, :Sb, :Te, :I, :Cs, :Ba, :La, :Pr, :Nd, :Sm, :Eu, :Gd, :Tb, :Dy, :Ho, :Er, :Tm, :Yb, :Lu, :Hf, :Ta, :W, :Re, :Os, :Ir, :Pt, :Au, :Hg, :Tl, :Pb, :Bi, :Th, :U]
+
+# extras = [:FeOT, :FeS, :Fe2O3, :SO2, :CARBONATE, :Fe2P, :Fe3P, :Fe2O3T, :LOI,:MoO3, :SO3, :V2O3, :BaO, :ST, :TiO, :ZrO2, ]
+
+# volatiles = [:H, :CO2, :F, :H2OM, :H2O, :H2OP, :N2, :O, :HCl, :O2, :CO1  ]
+# volunits = ["umol/g", "ccstp", "ccstp/g"]
