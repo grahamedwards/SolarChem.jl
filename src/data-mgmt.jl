@@ -7,7 +7,7 @@ Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`
 Requires that uncertainties are given as 1σ with keys `:sX` where X is the analyte name (e.g. `:Na` and `:sNa`).
 
 """
-function estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.01, 50.), minuncs::Int=30)
+function estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30)
     @assert uncextrema[1] < unc < uncextrema[2] "Ensure assumed uncertainty is within defined range of uncextrema"
     
     unc = 0.01float(unc)
@@ -20,7 +20,7 @@ function estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Numbe
         sk = Symbol(:s,k)
         u = sk ∈ extantuncs ?  d[sk] : fill(NaN,length(d[k]))
 
-        unc = if count(!isnan,d[k]) > minuncs 
+        unc = if count(!isnan,u) > minuncs 
             rsigs = d[sk]./d[k]
             vmean(rsigs[minunc .< rsigs .< maxunc])
         else 
@@ -91,7 +91,8 @@ trimnans(d::NamedTuple, k::Symbol; alsoinclude::Tuple=SolarChem.metadata()) = tr
 Given a NamedTuple of `data`, returns a NamedTuple with all the names of `data` and only including those rows within under `name` (::Symbol) that contain the provided `topic`(`s`) --- as a String or Tuple of Strings.
 
 """
-function pulltopic(d::NamedTuple, k::Symbol, topics::NTuple{Nt,String}; exactmatch::Bool=true) where {Nt}
+function pulltopic(d::NamedTuple, k::Symbol, topics::NTuple{Nt,String}; exactmatch::Bool=false) where {Nt}
+    @assert k ∈ keys(d) "$k is not a name in the supplied dataset."
     
     n = length(d[k])
     keepers = falses(n)
@@ -102,11 +103,82 @@ function pulltopic(d::NamedTuple, k::Symbol, topics::NTuple{Nt,String}; exactmat
             keepers[i] |= ifelse(exactmatch,isequal(x,y),contains(x,y))
         end
     end
+    
+    iszero(keepers) && @warn "No matches for given topic(s)"
+    
     (; zip(keys(d), (d[k][keepers] for k in keys(d)))...)
 end
+pulltopic(d::NamedTuple, k::Symbol, c::String; exactmatch::Bool=false) = pulltopic(d,k,(c,), exactmatch=exactmatch)
 
-pulltopic(d::NamedTuple, k::Symbol, c::String; exactmatch::Bool=true) = pulltopic(d,k,(c,), exactmatch=exactmatch)
 
+
+"""
+
+    pullgroup(data, group; exactmatch=false)
+
+Given a NamedTuple of chondrite `data`, returns a NamedTuple with all the names of `data`, including only the rows corresponding to the provided `group`(s) --- as a Symbol or Tuple of Symbols.
+
+"""
+function pullgroup(d::NamedTuple, topics::NTuple{N,Symbol}; exactmatch::Bool=false) where {N}
+
+    keepers = falses(length(d.group))
+    @inbounds @simd for t = 1:N
+        @inbounds @simd for i = eachindex(keepers)
+            x= d.group[i]
+            keepers[i] |= ifelse(exactmatch, topics == x , topics[t] ∈ x )
+        end
+    end
+    iszero(keepers) && @warn "No matches for given group(s)"
+    (; zip(keys(d), (d[k][keepers] for k in keys(d)))...)
+end
+pullgroup(d::NamedTuple, c::Symbol; exactmatch::Bool=false) = pullgroup(d, (c,), exactmatch=exactmatch)
+
+
+"""
+
+    pulltype(data, type; exactmatch=false)
+
+Given a NamedTuple of chondrite `data`, returns a NamedTuple with all the names of `data`, including only the rows corresponding to the provided `type`(s) --- as an Integer or Tuple of Integers.
+
+"""
+function pulltype(d::NamedTuple, topics::NTuple{N,Int}; exactmatch::Bool=false) where {N}
+    
+    n = length(d.type)
+    keepers = falses(n)
+    @inbounds @simd for t = 1:N
+        @inbounds @simd for i = 1:n
+            x = d.type[i]
+            keepers[i] |= ifelse(exactmatch, topics == x , topics[t] ∈ x )
+        end
+    end
+    iszero(keepers) && @warn "No matches for given type(s)"
+    (; zip(keys(d), (d[k][keepers] for k in keys(d)))...)
+end
+pulltype(d::NamedTuple, c::Int; exactmatch::Bool=false) = pulltype(d, (c,), exactmatch=exactmatch)
+
+
+
+"""
+
+    exclude(data::NamedTuple, name::Symbol, s)
+
+Exclude all indices containing string (or Tuple of strings) `s` from the specified `name` in `data`.
+
+"""
+function exclude(d::NamedTuple, k::Symbol, s::NTuple{N, String}) where N
+    @assert k ∈ keys(d) "$k is not a name in the supplied dataset."
+
+    keep = trues(length(d[k]))
+    x = d[k]
+    @inbounds for i = 1:N 
+        si = s[i]
+        @inbounds @simd for i = eachindex(keep)
+            keep[i] &= !contains(x[i],si)
+        end
+    end
+    return (; zip(keys(d), (d[k][keep] for k in keys(d)))...)
+end
+exclude(d::NamedTuple, k::Symbol, s::String) = exclude(d,k,(s,))
 
 #####
 

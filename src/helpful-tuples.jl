@@ -6,15 +6,22 @@ Return a Tuple containing all elements (as `Symbol`s) in order of increasing Z, 
 
 """
 periodictable() = (
-    :H, :He, # row 1
-    :Li, :Be, :B, :C, :N, :O, :F, :Ne, # row 2
-    :Na, :Mg, :Al, :Si, :P, :S, :Cl, :Ar, # row 3
-    :K, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn, :Ga, :Ge, :As, :Se, :Br, :Kr, # row 4
-    :Rb, :Sr, :Y, :Zr, :Nb, :Mo, :Tc, :Ru, :Rh, :Pd, :Ag, :Cd, :In, :Sn, :Sb, :Te, :I, :Xe, # row 5
-    :Cs, :Ba, # row 6, groups 1-2
-    :La, :Ce, :Pr, :Nd, :Pm, :Sm, :Eu, :Gd, :Tb, :Dy, :Ho, :Er, :Tm, :Yb, :Lu, # REEs (row 6, group 3)
-    :Hf, :Ta, :W, :Re, :Os, :Ir, :Pt, :Au, :Hg, :Tl, :Pb, :Bi, :Po, :At, :Rn, # row 6, groups 4-18
-    :Fr, :Ra, :Ac, :Th, :Pa, :U, :Np, :Pu, :Am, :Cm) #row 7, some actinides
+# row 1
+    :H, :He, 
+# row 2
+    :Li, :Be, :B, :C, :N, :O, :F, :Ne, 
+# row 3    
+    :Na, :Mg, :Al, :Si, :P, :S, :Cl, :Ar, 
+# row 4
+    :K, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn, :Ga, :Ge, :As, :Se, :Br, :Kr, 
+# row 5
+    :Rb, :Sr, :Y, :Zr, :Nb, :Mo, :Tc, :Ru, :Rh, :Pd, :Ag, :Cd, :In, :Sn, :Sb, :Te, :I, :Xe,
+# row 6
+    :Cs, :Ba, # groups 1-2
+    :La, :Ce, :Pr, :Nd, :Pm, :Sm, :Eu, :Gd, :Tb, :Dy, :Ho, :Er, :Tm, :Yb, :Lu, # REEs/group 3
+    :Hf, :Ta, :W, :Re, :Os, :Ir, :Pt, :Au, :Hg, :Tl, :Pb, :Bi, :Po, :At, :Rn, # groups 4-18
+#row 7, some actinides
+    :Fr, :Ra, :Ac, :Th, :Pa, :U, :Np, :Pu, :Am, :Cm) 
 
 """
 
