@@ -60,8 +60,14 @@
 @test SolarChem.unitconversionfactor("Ca (pg/g)") === 1e-12
 
 
-
-
+#= Things to test in loadastromatdata()
+    1. Compile headers: sample, taxonName, analysisComment, citation_url, dataset_url, a duplicate dataset_url, and a throwaway ignoreMe
+    2. Oxides: CaO, FeO, and Fe2O3 columns.
+    3. lab, method, and comment columns. 
+    4. Appropriate scaling of a few units.
+    5. One relative uncertainty, one S absolute, and one 2S uncertainty.
+    6. One no uncertainty column. 
+=#
 testromat = loadastromatdata(file="testromat.csv")
 
 @test keys(testromat) === (:name, :group, :type, :comment, :citation, :dataset, :Ca, :Fe, :sFe, :Cu, :sCu, :U, :sU)
@@ -87,16 +93,3 @@ testromat = loadastromatdata(file="testromat.csv")
 @test testromat.sCu[[1,3]] ≈ [ 0.034365, 0.15603]
 @test testromat.U[[1,4]] ≈ [1e-10, 2e-10]
 @test testromat.sU[[1,4]] ≈ [2e-12,2.5e-11]
-
-
-#= Things to test in loadastromatdata()
-
-1. Compile headers: sample, taxonName, analysisComment, citation_url, dataset_url, a duplicate dataset_url, and a throwaway ignoreMe
-2. Oxides: CaO, FeO, and Fe2O3 columns.
-3. lab, method, and comment columns. 
-4. Appropriate scaling of a few units.
-5. One relative uncertainty, one S absolute, and one 2S uncertainty.
-6. One no uncertainty column. 
-
-
-=#
