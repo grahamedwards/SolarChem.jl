@@ -2,12 +2,16 @@
 
     estimateuncertainty(d, unc; uncextrema, minuncs)
 
-Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values outside the bounds of the minimum and maximum percent uncertainty (`uncextrema`) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements (with %unc ∈ uncextrema = (0.01, 50) by default).
+Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values outside the bounds of the minimum and maximum percent uncertainty (`uncextrema`= (0.01%, 50%) by default) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements within `uncextrema`.
 
-Requires that uncertainties are given as 1σ with keys `:sX` where X is the analyte name (e.g. `:Na` and `:sNa`).
+Requires that uncertainties are given as 1σ with keys `:sX` where X is the analyte name (e.g. `:Na` -> `:sNa`).
+
+Using `estimateuncertainty!` overwrites `d`.
 
 """
-function estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30)
+estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30) = estimateuncertainty!(deepcopy(d), unc, uncextrema=uncextrema, minuncs=minuncs)
+
+function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30)
     @assert uncextrema[1] < unc < uncextrema[2] "Ensure assumed uncertainty is within defined range of uncextrema"
     
     unc = 0.01float(unc)
@@ -81,6 +85,39 @@ function trimnans(d::NamedTuple, kz::NTuple{Nkz,Symbol}; alsoinclude::NTuple{Nai
 end
 
 trimnans(d::NamedTuple, k::Symbol; alsoinclude::Tuple=SolarChem.metadata()) = trimnans(d, (k,), alsoinclude=alsoinclude)
+
+
+
+"""
+
+    trimextremes(data; min=0, max=1)
+
+Cycle through all elements in `data` and replace any value in excess of `min` and `max` (set by default to the physical limits of fractional mass abundance) to a NaN.
+
+Using `trimextremes!` overwites `data`. 
+
+"""
+trimextremes(d::NamedTuple; min::Number=0., max::Number=1.) = trimextremes!(deepcopy(d),min=min,max=max)
+
+function trimextremes!(d::NamedTuple; min::Number=0., max::Number=1.)
+   
+    counter = 0
+
+    @inbounds for el in periodictable()
+        if el ∈ keys(d)
+            x = d[el]
+            @inbounds @simd for i = eachindex(x)
+                xi = x[i]
+                keep = (min <= xi <= max)
+                counter += ifelse(isnan(xi),0,!keep)
+                x[i] = ifelse(keep, xi, NaN)
+            end
+        end
+    end
+    
+    println("\n$counter extremes replaced with NaNs\n")
+    return d
+end
 
 
 

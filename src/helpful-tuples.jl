@@ -27,10 +27,42 @@ periodictable() = (
 
     SolarChem.strelements
 
-A Tuple containing all elements in order of increasing Z (up to Z=96) as a `String` followed by a space. Derived from [`SolarChem.periodictable`](@ref) for use inside `loadastromatdata`. A constant within the scope of the SolarChem module. 
+A Tuple containing all elements in order of increasing Z (up to Z=96) as a `String` followed by a space. Derived from [`SolarChem.periodictable`](@ref) for use inside `loadastromatdata`. A `const` within the scope of the SolarChem module. 
 
 """
 const strelements = string.(periodictable()," ")
+
+
+
+"""
+
+    oxideconversion
+
+A NamedTuple with names of elements corresponding to a multiplicative factor to convert oxide composition to elemental composition. `Fe` corresponds to ferrous iron (FeO) and `Fe3` to ferric iron (Fe₂O₃). `oxideconversion` is a `const` within the scope of the SolarChem module. 
+
+---
+
+    CaO * oxideconversion.Ca = Ca
+
+    Ca / oxideconversion.Ca = CaO
+
+"""
+const oxideconversion = (; 
+    Ca= 40.078/(40.078 + 15.999), 
+    Na = 2* 22.989769 / (2* 22.989769 + 15.999), 
+    Ni = 58.6934 / (58.6934 + 15.999), 
+    Mg = 24.305 / (24.305 + 15.999), 
+    Co = 58.933195 / (58.933195 + 15.999), 
+    Fe = 55.845 / (55.845 + 15.999), 
+    Si = 28.0855 / (28.0855 + 2* 15.999), 
+    Al = 2* 26.981539 / (2* 26.981539 + 3* 15.999), 
+    Mn = 54.938044 / (54.938044 + 15.999), 
+    Cr = 2* 51.9961 / (2* 51.9961 + 3* 15.999), 
+    Ti = 47.867 / (47.867 + 2* 15.999), 
+    K = 2* 39.0983 / (2* 39.0983 + 15.999), 
+    P = 2* 30.973762 / (2* 30.973762 + 5* 15.999), 
+    Fe3 = 2* 55.845 / (2* 55.845 + 3* 15.999)
+    )
 
 
 """

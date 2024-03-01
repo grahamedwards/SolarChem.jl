@@ -13,7 +13,7 @@ include("load-data.jl")
 export bootstrapmean, bootstrapresample
 include("resamplers.jl")
 
-export calcweights, estimateuncertainty, trimnans, pulltopic, pulltype, pullgroup, exclude
+export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude
 include("data-mgmt.jl")
 
 end
