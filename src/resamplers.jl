@@ -3,16 +3,18 @@
 """
 
 ```julia
-bootstrapresample(n, x, σ, weights; rng)
+bsresample(n, x, σ; w, rng)
 ```
 
-Returns a Vector of `n` random samples from dataset `x` with (normally distributed) 1σ uncertainties `σ`, given `weights` (obtained from [`calcweights`](@ref)). If you desire an unweighted resample provide `ones(length(x))` for `weights`.
-
-Optionally provide a (pseudo)random number generator `rng` (default: Xoshiro256++).
+Returns a Vector of `n` random samples from dataset `x` with (normally distributed) 1σ uncertainties `σ`. Optionally provide weights `w` (obtained from [`calcweights`](@ref), unweighted by default) and a (pseudo)random number generator `rng` (default: Xoshiro256++).
 
 """
-function bootstrapresample(n::Int,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
+function bsresample(n::Int,data::Vector,sigma::Vector; w::Vector=[], rng::Random.AbstractRNG=Random.Xoshiro())
+        
+    weights = isempty(w) ? ones(eltype(data),length(data)) : w
+
     @assert length(data) == length(sigma) == length(weights)
+    
     wₛ = cumsum(weights)
     wₛ ./= last(wₛ)
     resampled = similar(data, n)
@@ -25,23 +27,23 @@ function bootstrapresample(n::Int,data::Vector,sigma::Vector,weights::Vector; rn
     resampled # (resampled,rows)
 end
 
-# Resample the dataset (randomly) with replacement
-    # Calculate mean of new dataset, repeat "nrs" times
-    # This assumes a gaussian analytical distribution
+
 
 """
 
 ```julia
-bootstrapmean(n, x, σ, weights; rng)
+bsmean(n, x, σ; w, rng)
 ```
 
-Returns a Vector of `n` means, each calculated from a random resampling of dataset `x` with (normally distributed) 1σ uncertainties `σ`, given `weights` (obtained from [`calcweights`](@ref)). If you desire unweighted resamplings provide `ones(length(x))` for `weights`.
-
-Optionally provide a (pseudo)random number generator `rng` (default: Xoshiro256++).
+Returns a Vector of `n` means, each calculated from a random resampling (with replacement) of dataset `x` with (normally distributed) 1σ uncertainties `σ`. Optionally provide `weights` (obtained from [`calcweights`](@ref), unweighted by default) and a (pseudo)random number generator `rng` (default: Xoshiro256++).
 
 """
-function bootstrapmean(n::Int,data::Vector,sigma::Vector,weights::Vector; rng::Random.AbstractRNG=Random.Xoshiro())
+function bsmean(n::Int,data::Vector,sigma::Vector; w::Vector=[],  rng::Random.AbstractRNG=Random.Xoshiro())
+    
+    weights = isempty(w) ? ones(eltype(data),length(data)) : w
+
     @assert length(data) == length(sigma) == length(weights)
+
     nd = length(data)
     wₛ = cumsum(weights) 
     wₛ ./= last(wₛ)
@@ -57,6 +59,14 @@ function bootstrapmean(n::Int,data::Vector,sigma::Vector,weights::Vector; rng::R
     means
 end
 
+
+function wbsresample(d::NamedTuple,weights::Vector{Float64})
+
+end
+
+function wbsmean()
+
+end
 
 
 #=
