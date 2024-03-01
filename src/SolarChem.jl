@@ -10,7 +10,7 @@ include("helpful-tuples.jl")
 export loadastromatdata
 include("load-data.jl")
 
-export bsmean, bsresample
+export bsmean, bsmean!, bsresample, bsresample!
 include("resamplers.jl")
 
 export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude
