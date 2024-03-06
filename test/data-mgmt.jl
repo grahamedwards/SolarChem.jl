@@ -77,7 +77,7 @@ dheat.comment .= ["bc °C", "370 degrees C", "350 C", "355 C", "b", "a"]
 @test pulltype(d,(3,5)).type == [(3,), (3,), (5,6), (3,), (5,)] 
 @test pulltype(d,(5,6), exactmatch=true).type == [(5,6)] 
 
-@test countratios(d,:Na,:Ca) === 3
-@test countratios(d,(:Na,:Mg),:Ca) === (Na = 3, Mg = 5, divisor = :Ca)
-@test countmeasurements(d,:Na) === 4
-@test countmeasurements(d,(:Na,:Mg)) === (Na = 4, Mg = 5)
+@test countratios(d,:Na,:Ca) == 3
+@test countratios(d,(:Na,:Mg),:Ca) == (Na = 3, Mg = 5, divisor = :Ca)
+@test countmeasurements(d,:Na) == 4
+@test countmeasurements(d,(:Na,:Mg)) == (Na = 4, Mg = 5)
