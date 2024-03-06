@@ -46,8 +46,8 @@ d = estimateuncertainty((; name, type, group, comment, citation, dataset, Na, Ca
 @test trimnans(d,(:Na,:Mg)).Mg == Mg[.!isnan.(Na) .* .!isnan.(Mg)]
 
 
-#@test @suppress prod(isnan.(trimextremes(d).Ca))
-#@test @suppress count(isnan.(trimextremes(d, min=14, max = 20).Ca)) == 2
+@test @silence prod(isnan.(trimextremes(d).Ca))
+@test @silence count(isnan.(trimextremes(d, min=14, max = 20).Ca)) == 2
 
 @test pulltopic(d, :comment, "c").comment == ["c"]
 @test length(pulltopic(d, :comment, "c").group) == length(pulltopic(d, :comment, "c").Na)
