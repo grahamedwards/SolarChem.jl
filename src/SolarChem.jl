@@ -1,8 +1,7 @@
 module SolarChem
 
 import Random, DelimitedFiles, Requires
-using VectorizedStatistics: vmean, vmedian
-using NaNStatistics: nanmean, nanmedian, countnotnans
+import VectorizedStatistics, NaNStatistics
 
 export periodictable
 include("helpful-tuples.jl")

@@ -26,7 +26,7 @@ function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Numb
 
         unc = if count(!isnan,u) > minuncs 
             rsigs = d[sk]./d[k]
-            vmean(rsigs[minunc .< rsigs .< maxunc])
+            VectorizedStatistics.vmean(rsigs[minunc .< rsigs .< maxunc])
         else 
             unc 
         end
@@ -250,7 +250,7 @@ function countmeasurements(d::NamedTuple, els::Tuple{Vararg{Symbol}})
     x=()
     @inbounds for el in els
         @assert el ∈ k "input name :$el is not a name in the provided dataset"
-        x= (x..., countnotnans(d[el]))
+        x= (x..., NaNStatistics.countnotnans(d[el]))
     end 
     NamedTuple{els}(x)
 end 
@@ -280,7 +280,7 @@ function countratios(d::NamedTuple, els::Tuple{Vararg{T}}, divisor::T) where T<:
     @inbounds for el in els
         @assert el ∈ k "input name :$el is not a name in the provided dataset"
         v .= d[el] ./ d[divisor]
-        x= (x..., countnotnans(v))
+        x= (x..., NaNStatistics.countnotnans(v))
     end 
     x = (x..., divisor)
     outnames = (els..., :divisor)
