@@ -47,7 +47,7 @@
 
 
 @test SolarChem.unitconversionfactor.("Ca" .* ("wt%", "%", "%m/m", "mg/g", "μg/g", "ppm", "ppb", "ng/g", "pg/g")) == (0.01, 0.01, 0.01, 0.001, 1.0e-6, 1.0e-6, 1.0e-9, 1.0e-9, 1.0e-12)
-@test @suppress_err isnan(SolarChem.unitconversionfactor("boop"))
+@test @silence isnan(SolarChem.unitconversionfactor("boop"))
 
 @test SolarChem.readvalue(1) == 1.
 @test SolarChem.readvalue(2.3) == 2.3

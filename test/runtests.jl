@@ -1,5 +1,15 @@
 using SolarChem, Test
-using StableRNGs, Suppressor
+using StableRNGs
+
+macro silence(block)
+    quote
+        ose,oso = stderr,stdout
+        redirect_stderr(devnull); redirect_stdout(devnull)
+        x= $(esc(block))
+        redirect_stderr(ose); redirect_stdout(oso)
+        x
+    end
+end
 
 @testset "Load Data" begin include("load-data.jl") end
 @testset "Data Mgmt" begin include("data-mgmt.jl") end
