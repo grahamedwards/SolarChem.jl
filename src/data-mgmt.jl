@@ -217,7 +217,79 @@ function exclude(d::NamedTuple, k::Symbol, s::NTuple{N, String}) where N
 end
 exclude(d::NamedTuple, k::Symbol, s::String) = exclude(d,k,(s,))
 
-#####
+
+
+"""
+
+    excludeheated(d::NamedTuple)
+
+Exclude data associated with heating experiments from `d`. Removes all rows with comments containing `°`, `degrees`, `0 C`, and `5 C`.
+
+see also: [`exclude`](@ref)
+
+"""
+excludeheated(d::NamedTuple) = SolarChem.exclude(d,:comment,("°", "degrees", "0 C", "5 C"))
+
+
+
+"""
+
+    countmeasurements(d::NamedTuple, element::Symbol)
+
+Returns the total number of measurements for a given `element` in `d`. 
+    
+---
+    
+    countmeasurements(d::NamedTuple, elements::Tuple)
+
+Returns a NamedTuple with names in `elements` and the total number of measurements for each member of `elements` in `d`. 
+
+"""
+function countmeasurements(d::NamedTuple, els::Tuple{Vararg{Symbol}})
+    k = keys(d)
+    x=()
+    @inbounds for el in els
+        @assert el ∈ k "input name :$el is not a name in the provided dataset"
+        x= (x..., countnotnans(d[el]))
+    end 
+    NamedTuple{els}(x)
+end 
+countmeasurements(d::NamedTuple,el::Symbol) = countmeasurements(d,(el,))[el]
+
+
+
+"""
+
+    countratios(d::NamedTuple, numerator::Symbol, denomenator::Symbol)
+
+Returns the total number of non-NaN ratios of `numerator`/`denomenator` in `d`. 
+    
+---
+    
+    countmeasurements(d::NamedTuple, numerators::Tuple, denomenator::Symbol)
+
+Returns a NamedTuple with names in `numerators` and the total number of non-NaN ratios in `d` for each ratio of `numerators ./ denomenator`.
+
+"""
+function countratios(d::NamedTuple, els::Tuple{Vararg{T}}, divisor::T) where T<:Symbol
+    k = keys(d)
+    @assert divisor ∈ k "divisor $divisor is not in dataset"
+
+    v = Vector{Float64}(undef,length(d.name))
+    x=()
+    @inbounds for el in els
+        @assert el ∈ k "input name :$el is not a name in the provided dataset"
+        v .= d[el] ./ d[divisor]
+        x= (x..., countnotnans(v))
+    end 
+    x = (x..., divisor)
+    outnames = (els..., :divisor)
+    NamedTuple{outnames}(x)
+end 
+
+countratios(d::NamedTuple, el::Symbol, divisor::Symbol) = countratios(d,(el,), divisor)[el]
+
+
 
 """
 

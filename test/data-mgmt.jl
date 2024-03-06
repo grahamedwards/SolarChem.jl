@@ -62,6 +62,11 @@ d.comment[1] = "bc"
 @test exclude(d,:comment,("a","b")).comment == ["c"]
 
 
+dheat =deepcopy(d)
+dheat.comment .= ["bc °C", "370 degrees C", "350 C", "355 C", "b", "a"]
+@test excludeheated(dheat).name == ["b", "a"]
+
+
 @test length(pullgroup(d,:H).group) == length(pullgroup(d,:H).Na)
 @test pullgroup(d,:H).group == [(:H,), (:H, :L), (:H,), (:H,)] 
 @test pullgroup(d,(:H,:L)).group == [(:H,), (:H, :L), (:H,), (:H,), (:L,)] 
@@ -71,3 +76,8 @@ d.comment[1] = "bc"
 @test pulltype(d,3).type == fill((3,),3)
 @test pulltype(d,(3,5)).type == [(3,), (3,), (5,6), (3,), (5,)] 
 @test pulltype(d,(5,6), exactmatch=true).type == [(5,6)] 
+
+@test countratios(d,:Na,:Ca) === 3
+@test countratios(d,(:Na,:Mg),:Ca) === (Na = 3, Mg = 5, divisor = :Ca)
+@test countmeasurements(d,:Na) === 4
+@test countmeasurements(d,(:Na,:Mg)) === (Na = 4, Mg = 5)

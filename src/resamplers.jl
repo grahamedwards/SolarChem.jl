@@ -88,4 +88,97 @@ function bsmean!(means::Vector{T}, data::Vector{T},sigma::Vector{T}; w::Vector{T
     means
 end
 
+#   #   #   #   #   #   #   #   #   #   #
+# Calculations in elemental batches:    #
+#   #   #   #   #   #   #   #   #   #   #
 
+
+
+"""
+
+    bootstrapelements(n::Int, data::NamedTuple, elements; resamplemeans=true, weighted=true, rng)
+
+Returns a NamedTuple of vectors of `n` bootstrap resampled data for each element in the Tuple `elements`. 
+    
+Resamples Monte Carlo'ed means by default. Declare `resamplemeans`=`false` to return resampled values. 
+    
+By default weights resampling by sample abundance (based on occurences of unique meteorite names (field `:name` in `data`). To remove weighting, declare `weighted`=`false`. 
+
+see also: [`trimnans`](@ref), [`calcweights`](@ref), [`bsresample`](@ref), [`bsmean`](@ref)
+
+"""
+function bootstrapelements(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}; resamplemeans::Bool=true, weighted::Bool=true, rng::Random.AbstractRNG=Random.Xoshiro())
+# Checks for informative errors
+    k = keys(d)
+    
+    weighted && @assert :name ∈ k "data must contain a :name field if weighted=true"
+
+    @inbounds for el in els
+        @assert el ∈ k "input name :$el is not a name in the provided dataset"
+        sel = Symbol(:s,el)
+        @assert  sel ∈ k "no corresponding uncertainty :$sel for :$el"
+    end 
+
+    x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
+
+    @inbounds for el in els 
+
+        trimmed = trimnans(d,el, alsoinclude=ifelse(weighted,(:name,),()))
+        weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed[el]))
+
+        resamplemeans ? 
+            bsmean!(x[el], trimmed[el], trimmed[Symbol(:s,el)], w=weights, rng=rng ) :
+            bsresample!(x[el], trimmed[el], trimmed[Symbol(:s,el)], w=weights, rng=rng )    
+    end
+    x
+end 
+
+
+
+"""
+
+    bootstrapratios(n::Int, data::NamedTuple, elements, divisor::Symbol; resamplemeans=true, weighted=true, rng)
+
+Returns a NamedTuple of vectors of `n` bootstrap resampled data for each element in the Tuple `elements`, as a ratio of element/`divisor` (calculated prior to resampling).
+    
+Resamples Monte Carlo'ed means by default. Declare `resamplemeans`=`false` to return resampled values. 
+    
+By default weights resampling by sample abundance (based on occurences of unique meteorite names (field `:name` in `data`). To remove weighting, declare `weighted`=`false`. 
+
+see also: [`trimnans`](@ref), [`calcweights`](@ref), [`bsresample`](@ref), [`bsmean`](@ref)
+
+"""
+function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divisor::Symbol; resamplemeans::Bool=true, weighted::Bool=true, rng::Random.AbstractRNG=Random.Xoshiro())
+    # Checks for informative errors
+        k = keys(d)
+        @assert divisor ∈ k "divisor $divisor is not in dataset"
+        @inbounds for el in els
+            @assert el ∈ k "input name :$el is not a name in the provided dataset"
+            sel = Symbol(:s,el)
+            @assert  sel ∈ k "no corresponding uncertainty :$sel for :$el"
+        end 
+    
+    
+        x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
+    
+        sdivisor = Symbol(:s,divisor)
+    
+        @inbounds for el in els 
+    
+            trimmed = trimnans(d,(el, divisor), alsoinclude=(:name,))
+            weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed.name))
+    
+            r = trimmed[el] ./ trimmed[divisor]
+            sr = similar(r)
+            @inbounds for i  in eachindex(sr)
+                xn = trimmed[Symbol(:s,el)][i]/trimmed[el][i]
+                xd = trimmed[sdivisor][i]/trimmed[divisor][i]
+                sr[i] = sqrt(xn*xn + xd*xd)
+            end 
+    
+            resamplemeans ? 
+                bsmean!(x[el], r, trimmed[Symbol(:s,el)], w=weights, rng=rng ) :
+                bsresample!(x[el], r, trimmed[Symbol(:s,el)], w=weights, rng=rng )    
+        end
+        x
+    end 
