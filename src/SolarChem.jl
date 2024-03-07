@@ -3,7 +3,7 @@ module SolarChem
 import Random, DelimitedFiles, Requires
 import VectorizedStatistics, NaNStatistics
 
-export periodictable
+export periodictable, majors
 include("helpful-tuples.jl")
 
 export loadastromatdata

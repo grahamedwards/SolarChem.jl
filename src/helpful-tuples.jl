@@ -93,3 +93,20 @@ Return a Tuple containing all chondrite genetic groups associated with the outer
 
 """
 outergroups() = (:CI, :CV, :CM, :CR, :CH, :CB, :CK, :CL, :CO, :Cung)
+
+
+
+"""
+
+    majors()
+
+Return a Tuple containing major elements.
+
+"""
+majors() = (:Na, :Mg, :K, :Ca, :Al, :Fe, :Ni, :Si)
+
+
+
+
+heavysolar() = (:Sr, :Y, :Zr, :Ba, :La, :Ce, :Pr, :Nd, :Sm, :Eu, :Gd, :Dy)
+lightsolar() = (:C, :Na, :Mg, :Al, :Si, :S, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn)
