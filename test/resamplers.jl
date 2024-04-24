@@ -36,3 +36,6 @@ x = bootstrapratios(100,d,(:Na,:Mg), :Ca, weighted=false, rng=StableRNG(1))
     @test 0.4 < mean(x.Na) < 0.6
     @test 2.2 < mean(x.Mg) < 2.5
 
+x = bootstrapratios(100,d,(:Na,:Mg), :Ca, fractional=true, rng=StableRNG(1)) 
+    @test 0.4 < mean(x.Na) < 0.6
+    @test 2.2 < mean(x.Mg) < 2.5

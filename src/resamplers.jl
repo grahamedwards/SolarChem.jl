@@ -192,8 +192,10 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
             end 
     
             resamplemeans ? 
-                bsmean!(x[el], r, trimmed[Symbol(:s,el)], w=weights, rng=rng ) :
-                bsresample!(x[el], r, trimmed[Symbol(:s,el)], w=weights, rng=rng )    
+                bsmean!(x[el], r, sr, w=weights, rng=rng ) :
+                bsresample!(x[el], r, sr, w=weights, rng=rng )
+            
+            fractional && fraction2ratio!(x[el]) 
         end
         x
     end 

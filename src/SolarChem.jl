@@ -13,7 +13,7 @@ include("load-data.jl")
 export bsmean, bsmean!, bsresample, bsresample!, bootstrapelements, bootstrapratios
 include("resamplers.jl")
 
-export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements
+export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements, fraction2ratio, ratio2fraction
 include("data-mgmt.jl")
 
 function __init__()

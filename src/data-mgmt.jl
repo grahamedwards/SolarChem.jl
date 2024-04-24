@@ -335,3 +335,47 @@ function calcweights(v::Vector; weights::Dict{String,T}=Dict{String,Float64}()) 
     end
     w
 end
+
+
+
+"""
+
+```julia
+fraction2ratio(x)
+```
+
+Algebraicaly convert a fraction `x` of the form ``\\frac{a}{a+b}`` to a ratio of the form ``\\frac{a}{b}``. 
+
+"""
+fraction2ratio(x::Number) = 1.0/((1.0/x) - 1.0)
+@inline fraction2ratio(x::Float64) = 1.0/((1.0/x) - 1.0)
+
+
+"""
+
+```julia
+fraction2ratio(x)
+```
+
+Algebraicaly convert a ratio `x` of the form ``\\frac{a}{b}`` to a fraction of the form ``\\frac{a}{a+b}``. 
+
+"""
+ratio2fraction(x::Number) = 1.0/((1.0/x) + 1.0)
+
+
+
+"""
+
+```julia
+fraction2ratio!(x::Vector)
+```
+
+Convert a Vector of fractions `x` to ratios, as by [`fraction2ratio`](@ref).
+
+"""
+function fraction2ratio!(x::Vector{Float64})
+    @inbounds @simd for i = eachindex(x)
+        x[i] = fraction2ratio(x[i])
+    end
+    x
+end

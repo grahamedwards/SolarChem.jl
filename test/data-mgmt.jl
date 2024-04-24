@@ -81,3 +81,9 @@ dheat.comment .= ["bc °C", "370 degrees C", "350 C", "355 C", "b", "a"]
 @test countratios(d,(:Na,:Mg),:Ca) == (Na = 3, Mg = 5, divisor = :Ca)
 @test countmeasurements(d,:Na) == 4
 @test countmeasurements(d,(:Na,:Mg)) == (Na = 4, Mg = 5)
+
+
+@test fraction2ratio(0.2) ≈ .25
+@test ratio2fraction(0.25) ≈ 0.2
+
+@test SolarChem.fraction2ratio!([0.2])[1] ≈ 0.25
