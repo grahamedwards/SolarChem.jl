@@ -77,9 +77,9 @@ function bsmean!(means::Vector{T}, data::Vector{T},sigma::Vector{T}; w::Vector{T
     wₛ = cumsum(weights) 
     wₛ ./= last(wₛ)
 
-    @inbounds for h = eachindex(means)
+    @inbounds @simd for h = eachindex(means)
         μ = zero(eltype(means))
-        @inbounds @simd for i = 1:nd
+        for i = 1:nd
             row = searchsortedfirst(wₛ, rand(rng))
             μ += data[row] + randn(rng)*sigma[row]
         end
@@ -121,7 +121,7 @@ function bootstrapelements(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}; re
 
     x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
 
-    @inbounds for el in els 
+    @batch for el in els 
 
         trimmed = trimnans(d,el, alsoinclude=ifelse(weighted,(:name,),()))
         weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed[el]))
@@ -148,7 +148,7 @@ By default weights resampling by sample abundance (based on occurences of unique
 see also: [`trimnans`](@ref), [`calcweights`](@ref), [`bsresample`](@ref), [`bsmean`](@ref)
 
 """
-function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divisor::Symbol; resamplemeans::Bool=true, weighted::Bool=true, rng::Random.AbstractRNG=Random.Xoshiro())
+function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divisor::Symbol;  resamplemeans::Bool=true, fractional::Bool=false, weighted::Bool=true, rng::Random.AbstractRNG=Random.Xoshiro())
     # Checks for informative errors
         k = keys(d)
         @assert divisor ∈ k "divisor $divisor is not in dataset"
@@ -163,17 +163,30 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
     
         sdivisor = Symbol(:s,divisor)
     
-        @inbounds for el in els 
-    
+        @batch for j in eachindex(els)
+
+            el = els[j]
+            sel = Symbol(:s,el)
             trimmed = trimnans(d,(el, divisor), alsoinclude=(:name,))
             weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed.name))
     
-            r = trimmed[el] ./ trimmed[divisor]
+            r = fractional ? 
+                trimmed[el] ./ (trimmed[divisor] .+ trimmed[el]) : 
+                trimmed[el] ./ trimmed[divisor] 
+
             sr = similar(r)
-            @inbounds for i  in eachindex(sr)
-                xn = trimmed[Symbol(:s,el)][i]/trimmed[el][i]
-                xd = trimmed[sdivisor][i]/trimmed[divisor][i]
-                sr[i] = sqrt(xn*xn + xd*xd)
+
+            tsd, td = trimmed[sdivisor], trimmed[divisor] # divisor
+            tsn, tn = trimmed[sel], trimmed[el] # numerator
+            
+            @inbounds @simd for i in eachindex(sr)
+                sxd, xd0 = tsd[i], td[i] # divisor, σ,μ
+                sxn, xn = tsn[i], tn[i] # numerator σ,μ
+                xd = ifelse(fractional, xd0+xn, xd0)
+                sxd = ifelse(fractional, sqrt(sxd * sxd + sxn * sxn), sxd)
+                xnf = sxn/xn
+                xdf =  sxd/xd
+                sr[i] = sqrt(xnf*xnf + xdf*xdf)
             end 
     
             resamplemeans ? 

@@ -1,6 +1,7 @@
 using SolarChem, Test
 using StableRNGs
 
+
 macro silence(block)
     quote
         ose,oso = stderr,stdout
@@ -10,6 +11,8 @@ macro silence(block)
         x
     end
 end
+
+mean(x) = SolarChem.VectorizedStatistics.vmean(x)
 
 @testset "Load Data" begin include("load-data.jl") end
 @testset "Data Mgmt" begin include("data-mgmt.jl") end

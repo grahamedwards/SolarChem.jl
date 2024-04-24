@@ -2,8 +2,9 @@ module SolarChem
 
 import Random, DelimitedFiles, Requires
 import VectorizedStatistics, NaNStatistics
+using Polyester: @batch # for speed
 
-export periodictable, majors
+export periodictable, majors, heavysolar, lightsolar
 include("helpful-tuples.jl")
 
 export loadastromatdata
