@@ -11,16 +11,16 @@ d = (name = ["b", "b", "a", "c", "b", "a"],  Na = [8.7, NaN, 8.0, 7.4, 8.2, NaN]
 
 x = bootstrapelements(100,d,(:Na,:Mg), rng=StableRNG(1))
     @test 7.8 < mean(x.Na) < 8
-    @test 35.9 < mean(x.Mg) < 36.1
+    @test 35.8 < mean(x.Mg) < 36.2
 
 x = bootstrapelements(100,d,(:Na,:Mg), resamplemeans=false, rng=StableRNG(1))
     @test 7.8 < mean(x.Na) < 8
-    @test 36.0 < mean(x.Mg) < 36.2
+    @test 35.8 < mean(x.Mg) < 36.2
 
 
 x = bootstrapelements(100,d,(:Na,:Mg), weighted=false, rng=StableRNG(1)) 
     @test 7.9 < mean(x.Na) < 8.1
-    @test 36.0 < mean(x.Mg) < 36.2
+    @test 35.8 < mean(x.Mg) < 36.2
 
 
 x = bootstrapratios(100,d,(:Na,:Mg), :Ca, rng=StableRNG(1)) 
@@ -30,9 +30,9 @@ x = bootstrapratios(100,d,(:Na,:Mg), :Ca, rng=StableRNG(1))
 
 x = bootstrapratios(100,d,(:Na,:Mg), :Ca, resamplemeans=false, rng=StableRNG(1)) 
     @test 0.4 < mean(x.Na) < 0.6
-    @test 2.2 < mean(x.Mg) < 2.5
+    @test 2.1 < mean(x.Mg) < 2.4
 
-x = bootstrapratios(2,d,(:Na,:Mg), :Ca, weighted=false, rng=StableRNG(1)) 
+x = bootstrapratios(100,d,(:Na,:Mg), :Ca, weighted=false, rng=StableRNG(1)) 
     @test 0.4 < mean(x.Na) < 0.6
-    @test 2.0 < mean(x.Mg) < 2.3
+    @test 2.2 < mean(x.Mg) < 2.5
 

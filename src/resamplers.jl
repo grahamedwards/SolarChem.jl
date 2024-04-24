@@ -121,7 +121,9 @@ function bootstrapelements(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}; re
 
     x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
 
-    @batch for el in els 
+    @batch for i in eachindex(els)
+
+        el = els[i] 
 
         trimmed = trimnans(d,el, alsoinclude=ifelse(weighted,(:name,),()))
         weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed[el]))

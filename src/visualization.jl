@@ -110,7 +110,7 @@ function cleanhist(x::Vector{<:Number}; bins::Int=32, scooch::Int=2)
 end
 
 
-function histpanels(data_in::NamedTuple; els::Tuple{Vararg{Symbol}}=(), cols::Int=0, bins::Int=32, figsize=(800,600), darkmode::Bool=false)
+function histpanels(data_in::NamedTuple; els::Tuple{Vararg{Symbol}}=(), cols::Int=0, bins::Int=32, labelsuffix=" (m/m)", figsize=(800,600), darkmode::Bool=false)
 
     els = ifelse(isempty(els), keys(data_in), els)
     nels = length(els)
@@ -122,19 +122,20 @@ function histpanels(data_in::NamedTuple; els::Tuple{Vararg{Symbol}}=(), cols::In
         i = j[1] + rows * (j[2]-1) #calculate index in els
         if i <= nels
             el = els[i] 
-            onehist(data_in[el], el, f=f[j[1],j[2]], bins=bins, darkmode=darkmode)
+            onehist(data_in[el], el, f=f[j[1],j[2]], bins=bins, labelsuffix=labelsuffix, darkmode=darkmode)
         end
     end
     f
 end
 
-function onehist(data_in::Vector, el::Symbol; f= Figure(), bins::Int=32, darkmode::Bool=false)
+function onehist(data_in::Vector, el::Symbol; f= Figure(), bins::Int=32, labelsuffix=" (g/g)", darkmode::Bool=false)
     x=data_in
 # Convert
     pltclr = fillcolor = ifelse(darkmode,:white,:black)
 
     h = SolarChem.cleanhist(x, bins=bins,scooch=2)
-    ax = Axis(f[1,1], xlabel=string(el," (m/m)"),bottomspinecolor=pltclr,xtickcolor=pltclr,xticklabelcolor=pltclr, xlabelcolor=pltclr,backgroundcolor=ifelse(darkmode,:transparent,:white),
+
+    ax = Axis(f[1,1], xlabel=string(el,labelsuffix),bottomspinecolor=pltclr,xtickcolor=pltclr,xticklabelcolor=pltclr, xlabelcolor=pltclr,backgroundcolor=ifelse(darkmode,:transparent,:white),
     xgridvisible=false,ygridvisible=false,yticklabelsvisible=false,yticksvisible=false,rightspinevisible=false,leftspinevisible=false,topspinevisible=false,)
 
     band!(ax,h.x,h.y,zero(h.y), color=(fillcolor,0.1))
