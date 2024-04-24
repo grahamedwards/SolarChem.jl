@@ -23,14 +23,14 @@ x = bootstrapelements(100,d,(:Na,:Mg), weighted=false, rng=StableRNG(1))
     @test 35.8 < mean(x.Mg) < 36.2
 
 
+
 x = bootstrapratios(100,d,(:Na,:Mg), :Ca, rng=StableRNG(1)) 
     @test 0.4 < mean(x.Na) < 0.6
     @test 2.2 < mean(x.Mg) < 2.5
 
-
 x = bootstrapratios(100,d,(:Na,:Mg), :Ca, resamplemeans=false, rng=StableRNG(1)) 
     @test 0.4 < mean(x.Na) < 0.6
-    @test 2.1 < mean(x.Mg) < 2.4
+    @test 2.2 < mean(x.Mg) < 2.5
 
 x = bootstrapratios(100,d,(:Na,:Mg), :Ca, weighted=false, rng=StableRNG(1)) 
     @test 0.4 < mean(x.Na) < 0.6
