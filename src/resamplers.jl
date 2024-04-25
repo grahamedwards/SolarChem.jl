@@ -188,7 +188,7 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
                 sxd = ifelse(fractional, sqrt(sxd * sxd + sxn * sxn), sxd)
                 xnf = sxn/xn
                 xdf =  sxd/xd
-                sr[i] = sqrt(xnf*xnf + xdf*xdf)
+                sr[i] = r[i]*sqrt(xnf*xnf + xdf*xdf)
             end 
     
             resamplemeans ? 

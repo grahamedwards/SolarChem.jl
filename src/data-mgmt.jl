@@ -12,7 +12,7 @@ Using `estimateuncertainty!` overwrites `d`.
 estimateuncertainty(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30) = estimateuncertainty!(deepcopy(d), unc, uncextrema=uncextrema, minuncs=minuncs)
 
 function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Number,Number}=(.1, 50.), minuncs::Int=30)
-    @assert uncextrema[1] < unc < uncextrema[2] "Ensure assumed uncertainty is within defined range of uncextrema"
+    @assert uncextrema[1] <= unc <= uncextrema[2] "Ensure assumed uncertainty is within defined range of uncextrema"
     
     unc = 0.01float(unc)
     minunc, maxunc = 0.01 .* float.(uncextrema)
@@ -24,20 +24,28 @@ function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Numb
         sk = Symbol(:s,k)
         u = sk ∈ extantuncs ?  d[sk] : fill(NaN,length(d[k]))
 
-        unc = if count(!isnan,u) > minuncs 
+        kunc = if count(!isnan,u) > minuncs 
+            
             rsigs = d[sk]./d[k]
-            VectorizedStatistics.vmean(rsigs[minunc .< rsigs .< maxunc])
+
+            meanbucket = rsigs[minunc .< rsigs .< maxunc]
+            meanunc = VectorizedStatistics.vmean(meanbucket)
+            
+            if minunc < meanunc < maxunc
+                println("Calculated σ($k)=$meanunc (n=$(length(meanbucket)))")
+                meanunc
+            else 
+                @warn "Calculated uncertainty ($(100*meanunc)%) exceeds extrema $uncextrema [%]. Proceeding with an assumed $(100unc)% uncertainty. Inspect $sk data if this was unintended."
+                unc
+            end
         else 
             unc 
         end
 
-        @assert unc < maxunc "Mean uncertainty ($(100*unc)%) exceeds maximum allowed ($(uncextrema[2])%). Inspect $sk data. "
-        @assert unc > minunc "Mean uncertainty ($(100*unc)%) less than minimum allowed ($(uncextrema[1])%). Inspect $sk data. "
-
         @inbounds @simd for i = eachindex(d[k])
             x, sig = d[k][i], u[i]
-            rsig = ifelse(isnan(sig), unc, sig/x ) # convert NaN to assumed uncertainty
-            u[i] = x * ifelse(minunc < rsig < maxunc, rsig, unc)
+            rsig = ifelse(isnan(sig), kunc, sig/x ) # convert NaN to assumed uncertainty
+            u[i] = x * ifelse(minunc < rsig < maxunc, rsig, kunc)
         end
         if sk ∉ extantuncs 
             d = (; zip((keys(d)...,sk), (d..., u))...) 

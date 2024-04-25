@@ -17,7 +17,7 @@ d = (; Na, sNa = .6Na, Ca, sCa = fill(NaN,length(Ca)), Mg, Fe, sFe)
 
 sigpct = 4
 
-dd = estimateuncertainty(d, sigpct)
+@silence dd = estimateuncertainty(d, sigpct)
 
 @test dd.sMg[1] == .01sigpct*dd.Mg[1] # create sMg 
 @test dd.sNa[1] == .01sigpct*dd.Na[1] # correct uncs > maxpctunc
@@ -39,7 +39,7 @@ name = comment = citation = dataset = v
 group = [(:H,), (:H, :L), (:H,), (:CV,), (:H,), (:L,)] 
 type = [(3,), (3,), (5,6), (3,), (7,), (5,)]
 
-d = estimateuncertainty((; name, type, group, comment, citation, dataset, Na, Ca, Mg), sigpct)
+@silence d = estimateuncertainty((; name, type, group, comment, citation, dataset, Na, Ca, Mg), sigpct)
 
 @test trimnans(d,:Na).name == ["a", "a", "c", "b"]
 @test trimnans(d,:Na).Na == Na[.!isnan.(Na)]
