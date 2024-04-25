@@ -265,6 +265,8 @@ function isL(v::AbstractString)
     b = 0 < sum(contains.(v, c))  
     b *= !contains(v,"EL") 
     b *= !contains(v,"CL") #none in astromat when built but this could always change
+    b *= !contains(v,"ACAPULCOITE")
+    b *= !contains(v,"LODRANITE")
     b *= ((contains(v,"/") | contains(v,")")) | !contains(v,"LL"))
 end
 
