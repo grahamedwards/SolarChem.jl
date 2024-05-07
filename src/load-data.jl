@@ -7,7 +7,7 @@ see also: [`assigngroup`](@ref), [`assigntype`](@ref), [`unitconversionfactor`](
 
 """
 
-function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astromat-1_24_2024-eventId-1868.csv"))
+function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astromat-4_25_2024-eventId-2064.csv"))
 
     x = DelimitedFiles.readdlm(file,',')
     # headings: "sample", "sample_url", "sample_url", "dataset_url", "dataset", "citation_url", "dataset_url", "citation", "citation_url", "collectionTypeName", "taxonType", "taxonName", "analysisType", "analyzedMaterialName", "analysisComment", "calcAvg", "numberOfReplicates"
@@ -156,7 +156,7 @@ function unitconversionfactor(s::AbstractString)
     
     f = ifelse(occursin("pg/g",s), 1e-12, f)
 
-    isnan(f) && @warn "No unit identified for heading: $s  [excluded from dataset]"
+    isnan(f) && @warn "No concentration unit identified for heading `$s`  [excluded from dataset, see ?unitconversionfactor for accepted units]"
 
     f
 end
