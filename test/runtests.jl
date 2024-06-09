@@ -1,7 +1,7 @@
 using SolarChem, Test
 using StableRNGs
 
-
+# Note that silent errors happen within a @silence block.
 macro silence(block)
     quote
         ose,oso = stderr,stdout
@@ -12,7 +12,7 @@ macro silence(block)
     end
 end
 
-mean(x) = SolarChem.VectorizedStatistics.vmean(x)
+mean(x) = SolarChem.StatsBase.mean(x)
 
 @testset "Load Data" begin include("load-data.jl") end
 @testset "Data Mgmt" begin include("data-mgmt.jl") end

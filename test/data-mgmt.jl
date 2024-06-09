@@ -1,4 +1,5 @@
 ## Testing data-mgmt.jl functions
+    # countnotnans
     # estimateuncertainty
     # calcweights
     # trimnans
@@ -6,6 +7,8 @@
     # pulltype
     # pullgroup
     # exclude
+
+@test SolarChem.countnotnans([1., NaN, 3., NaN, NaN, 4.,6.]) === 4
     
 Na = [8.7, NaN, 8.0, 7.4, 8.2, NaN]
 Ca = [17.6, 13.9, 14.9, NaN, 15.1, 15.6]

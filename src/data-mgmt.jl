@@ -1,5 +1,21 @@
 """
 
+    SolarChem.countnotnans(x)
+
+Count the number of non-NaN elements in `x`.
+"""
+function countnotnans(x)
+    n=0
+    @inbounds @simd ivdep for i ∈ eachindex(x)
+        n+= !isnan(x[i])
+    end
+    return n
+end
+
+
+
+"""
+
     estimateuncertainty(d, unc; uncextrema, minuncs)
 
 Calculate an assumed uncertainty `unc` (in %) for all analytes in NamedTuple `d`. Replaces any values outside the bounds of the minimum and maximum percent uncertainty (`uncextrema`= (0.01%, 50%) by default) with `unc`. If there are `> minuncs` (30 by default) uncertainties corresponding to measurements of an analyte, it calculates unreported uncertainties as the mean relative uncertainty of all measurements within `uncextrema`.
@@ -29,7 +45,7 @@ function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Numb
             rsigs = d[sk]./d[k]
 
             meanbucket = rsigs[minunc .< rsigs .< maxunc]
-            meanunc = VectorizedStatistics.vmean(meanbucket)
+            meanunc = StatsBase.mean(meanbucket)
             
             if minunc < meanunc < maxunc
                 println("Calculated σ($k)=$meanunc (n=$(length(meanbucket)))")
@@ -258,7 +274,7 @@ function countmeasurements(d::NamedTuple, els::Tuple{Vararg{Symbol}})
     x=()
     @inbounds for el in els
         @assert el ∈ k "input name :$el is not a name in the provided dataset"
-        x= (x..., NaNStatistics.countnotnans(d[el]))
+        x= (x..., countnotnans(d[el]))
     end 
     NamedTuple{els}(x)
 end 
@@ -288,7 +304,7 @@ function countratios(d::NamedTuple, els::Tuple{Vararg{T}}, divisor::T) where T<:
     @inbounds for el in els
         @assert el ∈ k "input name :$el is not a name in the provided dataset"
         v .= d[el] ./ d[divisor]
-        x= (x..., NaNStatistics.countnotnans(v))
+        x= (x..., countnotnans(v))
     end 
     x = (x..., divisor)
     outnames = (els..., :divisor)

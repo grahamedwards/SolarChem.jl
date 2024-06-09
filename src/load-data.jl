@@ -113,7 +113,7 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
             end
         end
         # Add new data to output NamedTuple, if there is any:
-        if NaNStatistics.countnotnans(v) > 0
+        if countnotnans(v) > 0
             if includesuncs
                 out = (; zip((keys(out)...,el, Symbol(:s,el)), (out..., v, sv))...)
             else
