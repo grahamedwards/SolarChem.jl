@@ -151,7 +151,7 @@ function onehist(data_in::Vector, el::Symbol; f= Figure(), bins::Int=32, labelsu
     xgridvisible=false,ygridvisible=false,yticklabelsvisible=false,yticksvisible=false,rightspinevisible=false,leftspinevisible=false,topspinevisible=false,)
 
     band!(ax,h.x,h.y,zero(h.y), color=(fillcolor,0.1))
-    lines!(ax,h.x,h.y, color=pltclr,linewdith=2,)
+    lines!(ax,h.x,h.y, color=pltclr,linewidth=2,)
     f
 end
 
