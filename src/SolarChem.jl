@@ -4,7 +4,7 @@ import Random, DelimitedFiles, Requires
 import Statistics
 using Polyester: @batch # for speed
 
-export periodictable, majors, heavysolar, lightsolar
+export periodictable, majors, heavysolar, lightsolar, mediumsolar, allsolar
 include("helpful-tuples.jl")
 
 export loadastromatdata

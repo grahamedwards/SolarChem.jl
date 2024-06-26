@@ -107,6 +107,46 @@ majors() = (:Na, :Mg, :K, :Ca, :Al, :Fe, :Ni, :Si)
 
 
 
+"""
 
+    allsolar()
+
+Return a Tuple of all elements with solar twin data reported in Bedell+ 2018 (ApJ, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)).
+
+see also: [`lightsolar`](@ref), [`mediumsolar`](@ref), [`heavysolar`](@ref)
+
+"""
+allsolar() = (lightsolar()...,mediumsolar()...,heavysolar()...)
+
+"""
+
+    lightsolar()
+
+Return a Tuple of Period 1-3 elements with solar twin data reported in Bedell+ 2018 (ApJ, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)).
+
+see also: [`allsolar`](@ref)
+
+"""
+lightsolar() = (:C, :Na, :Mg, :Al, :Si, :S)
+
+"""
+
+    mediumsolar()
+
+Return a Tuple of Period 4 elements with solar twin data reported in Bedell+ 2018 (ApJ, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)).
+
+see also: [`allsolar`](@ref)
+
+"""
+mediumsolar() = (:Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn) 
+
+"""
+
+    heavysolar()
+
+Return a Tuple of Period 5-6 elements with solar twin data reported in Bedell+ 2018 (ApJ, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)).
+
+see also: [`allsolar`](@ref)
+"""
 heavysolar() = (:Sr, :Y, :Zr, :Ba, :La, :Ce, :Pr, :Nd, :Sm, :Eu, :Gd, :Dy)
-lightsolar() = (:C, :Na, :Mg, :Al, :Si, :S, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn)
+
