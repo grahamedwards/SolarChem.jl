@@ -3,7 +3,7 @@ using StableRNGs
 
 include("silence.jl")
 
-mean(x) = SolarChem.StatsBase.mean(x)
+mean(x) = SolarChem.Statistics.mean(x)
 
 @testset "Load Data" begin include("load-data.jl") end
 @testset "Data Mgmt" begin include("data-mgmt.jl") end

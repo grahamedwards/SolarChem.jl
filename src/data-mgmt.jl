@@ -45,7 +45,7 @@ function estimateuncertainty!(d::NamedTuple, unc::Number; uncextrema::Tuple{Numb
             rsigs = d[sk]./d[k]
 
             meanbucket = rsigs[minunc .< rsigs .< maxunc]
-            meanunc = StatsBase.mean(meanbucket)
+            meanunc = Statistics.mean(meanbucket)
             
             if minunc < meanunc < maxunc
                 println("Calculated σ($k)=$meanunc (n=$(length(meanbucket)))")

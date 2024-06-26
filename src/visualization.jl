@@ -89,6 +89,18 @@ function binweave!(c::Vector{T}, a::AbstractVector{T}) where T
 end
 
 
+
+function quickhist(x::AbstractArray, binedges::AbstractRange)
+    h = zeros(Int, length(binedges)-1)
+    binmin, binstep, binmax = first(binedges), step(binedges), last(binedges)
+    @inbounds for i in eachindex(x)
+        xi = x[i]
+        binmin < xi <= binmax  || continue
+        h[1+floor(Int, (xi - binmin)/binstep)] += 1
+    end
+    h
+end
+
 """
 
 ```julia
@@ -105,7 +117,7 @@ function cleanhist(x::Vector{<:Number}; bins::Int=32, scooch::Int=2)
     xmin,xmax = extrema(x)
     x_scooch = scooch*(xmax-xmin)/(bins)
     binedges = LinRange(xmin-x_scooch, xmax+x_scooch, bins+2*scooch+1)
-    y = StatsBase.fit(Histogram, x, binedges) ./ (length(x)*step(binedges))
+    y = histogram(x, binedges) ./ (length(x)*step(binedges))
     return (x=SolarChem.binweave(binedges), y=SolarChem.interleave(y))
 end
 

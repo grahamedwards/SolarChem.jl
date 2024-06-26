@@ -1,7 +1,7 @@
 module SolarChem
 
 import Random, DelimitedFiles, Requires
-import StatsBase
+import Statistics
 using Polyester: @batch # for speed
 
 export periodictable, majors, heavysolar, lightsolar
