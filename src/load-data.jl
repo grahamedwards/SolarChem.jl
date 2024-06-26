@@ -79,7 +79,7 @@ function loadastromatdata(; file::String=string(@__DIR__,"/../data/astromat/astr
             cf = SolarChem.unitconversionfactor(header)
 
 # Convert from oxide to elemental.
-            if el ∈ (oxides) && contains(header,"O")
+            if el ∈ keys(oxides) && contains(header,"O")
                 cf *= ifelse(contains(header, "Fe2O3"), oxideconversion.Fe3, oxideconversion[el])
             end
 
