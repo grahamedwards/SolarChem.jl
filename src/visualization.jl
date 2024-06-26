@@ -117,7 +117,7 @@ function cleanhist(x::Vector{<:Number}; bins::Int=32, scooch::Int=2)
     xmin,xmax = extrema(x)
     x_scooch = scooch*(xmax-xmin)/(bins)
     binedges = LinRange(xmin-x_scooch, xmax+x_scooch, bins+2*scooch+1)
-    y = histogram(x, binedges) ./ (length(x)*step(binedges))
+    y = quickhist(x, binedges) ./ (length(x)*step(binedges))
     return (x=SolarChem.binweave(binedges), y=SolarChem.interleave(y))
 end
 
