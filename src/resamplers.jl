@@ -213,7 +213,7 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
         end 
 
         if isempty(trimmed[el])
-            printstyled("Caution: No non-NaN ratios of :$el.",color=:yellow)
+            printstyled("Caution: No non-NaN ratios of :$el.\n",color=:yellow)
             x[el] .= NaN
         elseif resamplemeans
             bsmean!(x[el], r, sr, w=weights, rng=rng )

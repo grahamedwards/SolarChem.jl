@@ -273,13 +273,16 @@ function countmeasurements(d::NamedTuple, els::Tuple{Vararg{Symbol}})
     k = keys(d)
     x=()
     @inbounds for el in els
-        @assert el ∈ k "input name :$el is not a name in the provided dataset"
-        x= (x..., countnotnans(d[el]))
+        if el ∉ k 
+            printstyled("Caution: input name :$el is not a name in the provided dataset. I am skipping it. \n", color=:yellow)
+            x = (x..., 0 )
+        else
+            x= (x..., countnotnans(d[el]))
+        end
     end 
     NamedTuple{els}(x)
 end 
 countmeasurements(d::NamedTuple,el::Symbol) = countmeasurements(d,(el,))[el]
-
 
 
 """
@@ -302,8 +305,12 @@ function countratios(d::NamedTuple, els::Tuple{Vararg{T}}, divisor::T) where T<:
     v = Vector{Float64}(undef,length(d.name))
     x=()
     @inbounds for el in els
-        @assert el ∈ k "input name :$el is not a name in the provided dataset"
-        v .= d[el] ./ d[divisor]
+        if el ∉ k 
+            printstyled("Caution: input name :$el is not a name in the provided dataset. I am skipping it. \n", color=:yellow)
+            v .= NaN
+        else
+            v .= d[el] ./ d[divisor]
+        end
         x= (x..., countnotnans(v))
     end 
     x = (x..., divisor)
