@@ -1,4 +1,65 @@
 """
+
+    solartwins(; gce=true)
+
+Returns a named tuple containing stellar parameters and solar-normalized compositions ([X/Fe], in dex) either corected for galactic chemical evolution (`gce=true`) or left uncorrected (`gce=false`). All corresponding uncertainty fields are preceded with `s`, e.g. `:Ca` and `:sCa` or `logg` and `slogg`.
+
+Data is compiled from Bedell + 2018 (*ApJ*, doi:[10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)). Where multiple species are reported (e.g. CI-CH, ScI-ScII, TiI-TiII, CrI-CrII), this reports the mean and quadrature-propagated uncertainties of the two species.
+
+"""
+function solartwins(;gce::Bool=true)
+
+    x = DelimitedFiles.readdlm(string(@__DIR__,"/../data/Bedell2018-solar-twins.csv"),',')
+
+    view(x,12,21:24) .= NaN
+
+    heads = view(x,1,:)
+
+    elsym = allsolar()
+
+    name = Symbol.(x[2:end,1])
+    thickdisk = Bool[ifelse(xx =="True",true,false) for xx in x[2:end,12]]
+    starnumbers = NamedTuple{(:teff, :steff, :logg, :slogg, :feh, :sfeh, :age, :sage, :mass, :smass)}(float.(x[2:end,i]) for i=2:11)
+
+    starstuff=(;name, starnumbers, thickdisk)
+
+    y = NamedTuple{(Symbol.(heads[13:end])...,)}(float.(x[2:end,i]) for i= 13:size(x,2));
+
+    n,v,vgce = (),(),()
+
+    for i = eachindex(elsym)
+        el = elsym[i]
+        if el == :Fe
+        elseif el == :C 
+            C = @. (y.CI + y.CH) / 2
+            sC = @. sqrt(y.CI_err^2 + y.CH_err^2)
+            Cg =  @. (y.CI_gce + y.CH_gce) / 2
+            sCg = @. sqrt(y.CI_gce_err^2 + y.CH_gce_err^2)
+            n,v,vgce = (n...,:C,:sC),(v...,C,sC),(vgce...,Cg,sCg)
+
+        elseif el ∈ (:Sc, :Ti, :Cr)
+            elv = @. (y[Symbol(el,:I)] + y[Symbol(el,:II)]) / 2
+            selv= @. sqrt(y[Symbol(el,:I_err)]^2 + y[Symbol(el,:II_err)]^2)
+            gelv = @. (y[Symbol(el,:I_gce)] + y[Symbol(el,:II_gce)]) / 2
+            gselv= @. sqrt(y[Symbol(el,:I_gce_err)]^2 + y[Symbol(el,:II_gce_err)]^2)
+            n,v,vgce = (n...,el,Symbol(:s,el)),(v...,elv,selv),(vgce...,gelv,gselv)
+        else
+            spI, spII = Symbol.(el,(:I,:II))
+            sp = ifelse(spI ∈ keys(y), spI, spII)
+            n = (n...,el,Symbol(:s,el))
+            v = (v...,y[sp], y[Symbol(sp,:_err)])
+            vgce = (vgce...,y[Symbol(sp,:_gce)], y[Symbol(sp,:_gce_err)])
+        end
+    end
+
+    comps = gce ? NamedTuple{n}(vgce) : NamedTuple{n}(v)
+
+    (; starstuff..., comps...)
+end
+
+
+
+"""
 loadastromatdata(file::String)
 
 Load data exported from Astromat as a csv. Given underlying group and type assignment functions, this will only load chondrite data. 
@@ -293,6 +354,8 @@ isCL(v::AbstractString) = contains(v, "CL") & !contains(v, "UNCL")
 isCO(v::AbstractString) =  0 < sum(contains.(v, ("CO1", "CO2", "CO3")))
 
 isCung(v::AbstractString) = 0 < sum(contains.(v,("C-UNG", "C1", "C2", "C3", "C4")))
+
+
 
 # unique(taxonName) =["LL3 CHONDRITE", "H4", "H3", "H6", "C-UNG", "H5", "L3", "CM", "DIOGENITE", "EUCRITE-MMICT", "EUCRITE", "H3.3 CHONDRITE", "CH3", "H3.0", "CK5", "EL3 CHONDRITE", "CM2", "ANGRITE", "EUCRITE-CM", "ACHONDRITE-UNG", "CR2", "", "UREILITE", "R4", "STONE-UNCL", "LUNAR", "EH4 CHONDRITE", "CV3", "CO3.5", "R3.8-5", "CO3.7", "L6", "E4", "EL5 CHONDRITE", "CI1", "L/LL4", "IRON-IVA", "LL5 CHONDRITE", "LL3.2/3.4 CHONDRITE", "EUCRITE (POLYMICT)", "H6 CHONDRITE", "L6 CHONDRITE", "L5 CHONDRITE", "CO3.6 CHONDRITE", "SHERGOTTITE", "L3.5 CHONDRITE", "L3.4 CHONDRITE", "L3.7-3.9 CHONDRITE", "MESOSIDERITE", "L3-6 CHONDRITE", "IRON-UNGROUPED", "EH3 CHONDRITE", "H3.7 CHONDRITE", "LL3.7 CHONDRITE", "CO3.0 CHONDRITE", "H3.9 CHONDRITE", "AUBRITE", "NIPR COLLECTION", "EUCRITE (UNBRECCIATED)", "CV3 CHONDRITE", "LUNAR-ANORTH. BRECCIA", "EL6 CHONDRITE", "ACAPULCOITE", "CM2 CHONDRITE", "CO3.4 CHONDRITE", "H5 CHONDRITE (IN ICE)", "H5 CHONDRITE", "UREILITE (AUG-BEARING)", "CK4 CHONDRITE", "L4 CHONDRITE", "LL3.2/3.5 CHONDRITE", "L3.4-3.7 CHONDRITE", "LL3.3 CHONDRITE", "LL6 CHONDRITE", "CM1/2 CHONDRITE", "CO3.5 CHONDRITE", "MARTIAN (OPX)", "SNC ORTHOPYROXENITE", "H4 CHONDRITE", "BRACHINITE", "L3.8 CHONDRITE", "LL3.4 CHONDRITE", "IRON-IIIAB", "L3.9 CHONDRITE", "EUCRITE (MG-RICH)", "H3.5-4 CHONDRITE", "CH3 CHONDRITE", "R3.6 CHONDRITE", "H4/5", "H3.5 CHONDRITE", "H3.4 CHONDRITE", "H5/6", "CHONDRITE-UNCL", "L3.7 CHONDRITE", "IRON, IAB-MG", "EUCRITE-PMICT", "L5", "CO3.6", "MARTIAN (SHERGOTTITE)", "L3.6 CHONDRITE", "MESOSIDERITE-B1", "L4", "CO3.0", "HOWARDITE", "L3.2 CHONDRITE", "LL3.5 CHONDRITE", "L3.7-4 CHONDRITE", "EUCRITE-UNBR", "CV3-AN", "LUNAR (ANORTH)", "H3.6 CHONDRITE", "LUNAR (GABBRO)", "EH4", "C2-UNG", "LL4 CHONDRITE", "EH4/5", "LL3.15", "LL3.9", "H/L3.9", "OC", "LL6 CHON. (BRECCIA)", "CR2 CHONDRITE", "CO3 CHONDRITE", "L/LL6", "CK3", "IRON-IVB", "CO3", "R3.8", "CK4", "MARTIAN (CHASSIGNITE)", "R3.5-6", "C3-UNG", "CK4/5", "EL4 CHONDRITE", "UREILITE-PMICT", "R3-4", "CK3-AN", "H-IMP MELT", "H3.8 CHONDRITE", "H~6", "LUNAR-BASALT", "H5-6 CHONDRITE", "CO3 CHONDRITE (ANOMALOUS)", "H5-7", "IRON, IIAB", "LUNAR (FELDSP. BRECCIA)", "UREILITE (POLYMICT)", "CK5 CHONDRITE", "IRON-IAB", "CM1 CHONDRITE", "C2 CHONDRITE UNGROUPED", "IRON-IIE (ANOMALOUS)", "L3.3-3.6 CHONDRITE", "ACAPULCOITE/LODRANITE", "IRON-IAB (ANOMALOUS)", "LUNAR-BASALTIC BRECCIA", "EUCRITE (BRECCIATED)", "UREILITE (POLYMICT ?)", "CK5/6 CHONDRITE", "L3.0 CHONDRITE", "CV3 CHONDRITE (REDUCED)", "H4 CHONDRITE (ANOMALOUS)", "EH4/5 CHONDRITE", "L/LL3.2 CHONDRITE", "TERRESTRIAL ROCK", "IRON-IIE", "CO3.3", "LODRANITE", "CR", "ACHON. UNGROUPED", "DIOGENITE (OLIVINE)", "EL4/5", "IRON-OCTAHEDRITE", "CHONDRITE UNGROUPED", "DIOGENITE (UNIQUE)", "CM CHONDRITE (ANOMALOUS)", "CR1 CHONDRITE", "LL3.8 CHONDRITE", "IRON, IAB-UNG", "L5-6", "C4-UNG", "WINONAITE", "CBB", "EL6/7", "L3.7-6", "R3-6", "EL7", "L/LL3.4", "CO3.8", "CO3.2", "K3", "L/LL5", "LL3.2", "R CHONDRITE", "H CHONDRITE (IMPACT MELT)", "L CHONDRITE (IMPACT MELT)", "R4 CHONDRITE", "CM1-2 CHONDRITE", "AUBRITE (ANOMALOUS)", "R6 CHONDRITE", "LUNAR (BASALT)", "LL5", "UREILITE (ANOMALOUS)", "CK6 CHONDRITE", "C3 CHONDRITE UNGROUPED", "L3.1 CHONDRITE", "L3.2-3.5 CHONDRITE", "E3 CHONDRITE (ANOMALOUS)", "CHON. (KAKANGARI-LIKE)", "EH5 CHONDRITE", "L5/6", "L(LL)3.05 CHONDRITE", "CV3 CHONDRITE (ANOMALOUS)", "R3 CHONDRITE", "L3.10 CHONDRITE", "NAKHLITE", "CB CHONDRITE", "LUNAR-FELDSPATHIC BRECCIA", "H5 CHONDRITE (ANOMALOUS)", "CR3 CHONDRITE", "CHONDRITE-UNG", "CM1", "CV2", "MARTIAN (NAKHLITE)", "IRON, IID-AN", "LL3.6 CHONDRITE", "CM-AN", "UNKNOWN", "MARTIAN (POLYMICT BRECCIA)", "R3/4", "R3", "CK5/6", "R3.9", "R5", "DIOGENITE-AN", "H", "ENST ACHON", "MARTIAN", "EUCRITE-AN", "DIOGENITE-PM", "LL5/6 CHONDRITE", "LL3.1", "LL3.05", "DIOGENITE-OLIVINE", "R3.7", "MARTIAN (AUGITE BASALT)", "H4-6 CHONDRITE", "C3", "CM1/2", "ACHONDRITE-PRIM", "E6", "CO3.4", "CH CHONDRITE", "CK3 CHONDRITE", "R3.8-6 CHONDRITE", "CBA", "ENSTATITE METEORITE UNGR", "CBB CHONDRITE", "CV3.4", "EUCRITE-BR", "H3.2-3.7", "MESOSIDERITE-AN", "L3.6-4 CHONDRITE", "R3.8-6", "R3-5", "KREEP BASALT", "H-METAL", "LL3.00", "L6/7", "H3-6", "C", "H/L3.6", "LL3.1-3.5 CHONDRITE", "H3-4", "LL7 CHONDRITE", "LODRANITE-AN", "H-AN", "LL3.0", "H7", "L4/5", "EH", "LL", "IRON, IIIAB", "IRON, IIE-AN", "H3/4", "E5-AN", "IRON, IAB COMPLEX", "EH6-AN", "H3.2-AN", "C1/2-UNG", "EH-IMP MELT", "CK6", "EH6 CHONDRITE", "PALLASITE, UNGROUPED", "R6"]
 

@@ -7,7 +7,7 @@ using Polyester: @batch # for speed
 export periodictable, majors, heavysolar, lightsolar, mediumsolar, allsolar
 include("helpful-tuples.jl")
 
-export loadastromatdata
+export loadastromatdata, solartwins
 include("load-data.jl")
 
 export bsmean, bsmean!, bsresample, bsresample!, bootstrapelements, bootstrapratios
