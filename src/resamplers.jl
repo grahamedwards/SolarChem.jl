@@ -135,7 +135,7 @@ function bootstrapelements(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}; re
         weights = weighted ? calcweights(trimmed.name) : ones(length(trimmed[el]))
 
         if isempty(trimmed[el])
-            @warn "No non-NaN ratios of :el."
+            printstyled("Caution: No :$el data.\n",color=:yellow)
             x[el] .= NaN
         elseif resamplemeans
             bsmean!(x[el], trimmed[el], trimmed[Symbol(:s,el)], w=weights, rng=rng )

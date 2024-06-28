@@ -1,3 +1,12 @@
+function Base.isnan(x::AbstractArray)
+    y = true
+    @inbounds @simd ivdep for i = eachindex(x)
+        y &= isnan(x[i]) 
+    end
+    y 
+end
+
+
 """
 
     SolarChem.countnotnans(x)
