@@ -150,11 +150,13 @@ end
 
 """
 
-    bootstrapratios(n::Int, data::NamedTuple, elements, divisor::Symbol; resamplemeans=true, weighted=true, rng)
+    bootstrapratios(n::Int, data::NamedTuple, elements, divisor::Symbol; resamplemeans=true, fractional=false, weighted=true, rng)
 
 Returns a NamedTuple of vectors of `n` bootstrap resampled data for each element in the Tuple `elements`, as a ratio of element/`divisor` (calculated prior to resampling).
     
 Resamples Monte Carlo'ed means by default. Declare `resamplemeans`=`false` to return resampled values. 
+
+`fractional=true` resamples ratios as fractions \$\\frac{x}{x+y}\$ and then algebraically converted to ratios \$\\frac{x}{y}\$. This mitigates resampled outliers stemming from small values of \$y\$. If `fractional=false`,  ratios are calculated directly.
     
 By default weights resampling by sample abundance (based on occurences of unique meteorite names (field `:name` in `data`). To remove weighting, declare `weighted`=`false`. 
 

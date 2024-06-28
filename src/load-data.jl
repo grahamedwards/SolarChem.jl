@@ -88,7 +88,11 @@ function loadastromatdata(file::String=string(@__DIR__,"/../data/astromat/astrom
 
                 @inbounds for k = 1:n
                     r = SolarChem.readvalue(xx[ni[k]]) * cf
-                    vk = el == :Fe ? v[k]+ifelse(isnan(r),0,r) : v[k]
+                    vk = v[k]
+                    if el == :Fe # Multiple measurements of Fe may need to sum
+                        vk += ifelse(isnan(r),0,r)
+                        vk = ifelse(iszero(vk),NaN,vk)
+                    end
                     v[k] = ifelse(isnan(vk), r, vk) 
                 end
             else 
