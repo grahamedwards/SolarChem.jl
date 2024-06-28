@@ -3,7 +3,7 @@ loadastromatdata(file::String)
 
 Load data exported from Astromat as a csv. Given underlying group and type assignment functions, this will only load chondrite data. 
 
-see also: [`assigngroup`](@ref), [`assigntype`](@ref), [`unitconversionfactor`](@ref), ['readvalue`](@ref)
+see also: [`assigngroup`](@ref), [`assigntype`](@ref), [`unitconversionfactor`](@ref), [`readvalue`](@ref)
 
 """
 function loadastromatdata(file::String=string(@__DIR__,"/../data/astromat/astromat-6_27_2024-eventId-2294.csv"))
@@ -166,7 +166,7 @@ end
 
     readvalue(x)
 
-Return a value `x`` that is either a `Number` as a float or parses `x` if it's a String. An empty String yields `NaN`. Tolerates usage of commas in numbers.
+Return a value `x` that is either a `Number` as a float or parses `x` if it's a String. An empty String yields `NaN`. Tolerates usage of commas in numbers.
 
 """
 readvalue(x::Number) = float(x)
