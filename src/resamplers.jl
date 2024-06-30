@@ -185,6 +185,7 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
     els = present
 
     x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
+    x = (; x..., divisor = divisor)
 
     sdivisor = Symbol(:s,divisor)
 

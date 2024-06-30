@@ -414,7 +414,7 @@ Convert a Vector of fractions `x` to ratios, as by [`fraction2ratio`](@ref).
 
 """
 function fraction2ratio!(x::Vector{Float64})
-    @inbounds @simd for i = eachindex(x)
+    @inbounds @simd ivdep for i = eachindex(x)
         x[i] = fraction2ratio(x[i])
     end
     x

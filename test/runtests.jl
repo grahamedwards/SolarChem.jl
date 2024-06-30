@@ -3,8 +3,10 @@ using StableRNGs
 
 include("silence.jl")
 
-mean(x) = SolarChem.Statistics.mean(x)
+mean(x) = SolarChem.Statistics.mean(x) 
+std(x) = SolarChem.Statistics.std(x)
 
-@testset "Load Data" begin include("load-data.jl") end
-@testset "Data Mgmt" begin include("data-mgmt.jl") end
-@testset "Resamplers" begin include("resamplers.jl") end
+@testset "Load Data" include("load-data.jl")
+@testset "Data Mgmt" include("data-mgmt.jl")
+@testset "Resamplers" include("resamplers.jl")
+@testset "Results" include("results.jl")

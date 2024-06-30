@@ -16,6 +16,9 @@ include("resamplers.jl")
 export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements, fraction2ratio, ratio2fraction
 include("data-mgmt.jl")
 
+export ratiosummary
+include("results.jl")
+
 export solartwins
 include("stars.jl")
 
