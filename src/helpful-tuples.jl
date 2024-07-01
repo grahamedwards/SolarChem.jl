@@ -109,14 +109,14 @@ majors() = (:Na, :Mg, :K, :Ca, :Al, :Fe, :Ni, :Si)
 
 """
 
-    allsolar(; Fe=false)
+    allsolar(; Fe=true)
 
 Return a Tuple of all elements with solar twin data reported in Bedell+ 2018 (*ApJ*, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)). Excludes `:Fe` by default, but `Fe=true` will include it. 
 
 see also: [`lightsolar`](@ref), [`mediumsolar`](@ref), [`heavysolar`](@ref)
 
 """
-allsolar(; Fe=false) = (lightsolar()...,mediumsolar(Fe=Fe)...,heavysolar()...)
+allsolar(; Fe=true) = (lightsolar()...,mediumsolar(Fe=Fe)...,heavysolar()...)
 
 """
 
@@ -131,7 +131,7 @@ lightsolar() = (:C, :Na, :Mg, :Al, :Si, :S)
 
 """
 
-    mediumsolar(; Fe=false)
+    mediumsolar(; Fe=true)
 
 Return a Tuple of Period 4 elements with solar twin data reported in Bedell+ 2018 (*ApJ*, [doi:10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)).
 
@@ -140,7 +140,7 @@ Excludes `:Fe` by default, but `Fe=true` will include it.
 see also: [`allsolar`](@ref)
 
 """
-mediumsolar(;Fe=false) = ifelse(Fe, (:Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn), (:Ca, :Sc, :Ti, :V, :Cr, :Mn, :Co, :Ni, :Cu, :Zn) )
+mediumsolar(;Fe=true) = ifelse(Fe, (:Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn), (:Ca, :Sc, :Ti, :V, :Cr, :Mn, :Co, :Ni, :Cu, :Zn) )
 
 """
 

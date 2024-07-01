@@ -124,7 +124,12 @@ end
 
 function histpanels(data_in::NamedTuple; els::Tuple{Vararg{Symbol}}=(), cols::Int=0, bins::Int=32, labelsuffix=" (m/m)", figsize=(800,600), darkmode::Bool=false)
 
-    els = ifelse(isempty(els), keys(data_in), els)
+    kdi = keys(data_in)
+    if :divisor ∈ kdi
+        kdi = collect(kdi)[collect(kdi .!= :divisor)]
+    end
+
+    els = ifelse(isempty(els), kdi, els)
     nels = length(els)
     cols = ifelse(iszero(cols), ceil(Int,sqrt(nels)), cols)
     rows = ceil(Int,nels/cols)
