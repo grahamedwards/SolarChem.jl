@@ -19,7 +19,7 @@ include("data-mgmt.jl")
 export ratiosummary
 include("results.jl")
 
-export solartwins
+export solartwins, sun
 include("stars.jl")
 
 export LoddersFegley1998

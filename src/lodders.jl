@@ -1,4 +1,12 @@
+"""
 
+    LoddersFegley1998()
+
+Returns a NamedTuple containing the meteorite chemistry data reported in Tables 2.3, 16.10, and 16.11 of Lodders & Fegley  (1998, *The Planetary Scientist's Companion*, Oxford University Press). 
+
+Fields include element names (`els`), atomic number (`z`), 50% condensation temperature (`Tc`), `inner` solar system mean composition (comprised of `EH`, `EL`, `H`, `L`, `LL`, and `R` groups), and `outer` solar system mean composition (comprised of `CI`, `CM`, `CV`, `CO`, `CK`, and `CR` groups).
+
+"""
 function LoddersFegley1998()
     els = [:H, :Li, :Be, :B, :C, :N, :O, :F, :Na, :Mg, :Al, :Si, :P, :S, :Cl, :K, :Ca, :Sc, :Ti, :V, :Cr, :Mn, :Fe, :Co, :Ni, :Cu, :Zn, :Ga, :Ge, :As, :Se, :Br, :Rb, :Sr, :Y, :Zr, :Nb, :Mo, :Ru, :Rh, :Pd, :Ag, :Cd, :In, :Sn, :Sb, :Te, :I, :Cs, :Ba, :La, :Ce, :Pr, :Nd, :Sm, :Eu, :Gd, :Tb, :Dy, :Ho, :Er, :Tm, :Yb, :Lu, :Hf, :Ta, :W, :Re, :Os, :Ir, :Pt, :Au, :Hg, :Tl, :Pb, :Bi, :Th, :U]
 
@@ -48,7 +56,7 @@ function LoddersFegley1998()
     inner = (; zip(els,inner)...)
     outer = (; zip(els, outer)...)
     
-    (; z, els, inner, outer, H, L, LL, R, EH, EL, CI, CM, CV, CO, CK, CR )
+    (; z, els, Tc, inner, outer, H, L, LL, R, EH, EL, CI, CM, CV, CO, CK, CR )
 end
 
 
