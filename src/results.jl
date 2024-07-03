@@ -8,6 +8,9 @@ If no ratios were calculated for a field in `resampled_ratios` (all values `NaN`
 
 Optionally, provide `ratiocounts` calculated by [`countratios`](@ref) and a minimum number of ratios `minratios` for each element required to use `resampled_ratios`. If the ratio counts for an element is less than `minratios`, μ/σ are calculated from the corressponding elements in `resampled_measurements`.
 
+---
+
+`NamedTuple(x)` for some `x = ratiosummary...` will convert the result to a NamedTuple.
 
 """
 function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::NamedTuple=(;), minratios::Int=-1)
@@ -44,3 +47,6 @@ function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::Name
     end
     (numerators,ms)
 end
+
+
+NamedTuple(x::Tuple{Vector{Symbol}, Matrix{Float64}}) = (; zip(x[1], [x[2][i,1:2] for i in axes(x[2],1)])...)
