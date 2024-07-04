@@ -84,6 +84,7 @@ function sun(divisor::Union{Symbol,Nothing}=nothing; logspace::Bool=true)
 
     x = ([12.0, 0.0], [10.914, 0.013], [0.96, 0.06], [1.38, 0.09], [2.7, 0.2], [8.46, 0.04], [7.83, 0.07], [8.69, 0.04], [4.4, 0.25], [8.06, 0.05], [6.22, 0.03], [7.55, 0.03], [6.43, 0.03], [7.51, 0.03], [5.41, 0.03], [7.12, 0.03], [5.31, 0.2], [6.38, 0.1], [5.07, 0.03], [6.3, 0.03], [3.14, 0.04], [4.97, 0.05], [3.9, 0.08], [5.62, 0.04], [5.42, 0.06], [7.46, 0.04], [4.94, 0.05], [6.2, 0.04], [4.18, 0.05], [4.56, 0.05], [3.02, 0.05], [3.62, 0.1], [NaN, NaN], [NaN, NaN], [NaN, NaN], [3.12, 0.1], [2.32, 0.08], [2.83, 0.06], [2.21, 0.05], [2.59, 0.04], [1.47, 0.06], [1.88, 0.09], [1.75, 0.08], [0.78, 0.11], [1.57, 0.1], [0.96, 0.1], [NaN, NaN], [0.8, 0.2], [2.02, 0.1], [NaN, NaN], [NaN, NaN], [NaN, NaN], [2.22, 0.05], [NaN, NaN], [2.27, 0.05], [1.11, 0.04], [1.58, 0.04], [0.75, 0.05], [1.42, 0.04], [0.95, 0.04], [0.52, 0.04], [1.08, 0.04], [0.31, 0.1], [1.1, 0.04], [0.48, 0.11], [0.93, 0.05], [0.11, 0.04], [0.85, 0.11], [0.1, 0.09], [0.85, 0.05], [NaN, NaN], [0.79, 0.11], [NaN, NaN], [1.35, 0.12], [NaN, NaN], [NaN, NaN], [0.91, 0.12], [NaN, NaN], [0.92, 0.17], [1.95, 0.08], [NaN, NaN], [0.03, 0.1], [NaN, NaN])
 
+    xx= ()
 
     if isnothing(divisor)
         @inbounds for i = eachindex(x)
@@ -91,7 +92,7 @@ function sun(divisor::Union{Symbol,Nothing}=nothing; logspace::Bool=true)
             xi[1] -= 12.0
             xi1 = 10^xi[1]
             xi2 = log(10) * xi1 * xi[2]
-            x[i][:] .= (xi1, xi2)
+            xx= (xx..., Composition(xi1, xi2))
         end
     else
         id = findfirst( elements .== divisor)
@@ -102,9 +103,9 @@ function sun(divisor::Union{Symbol,Nothing}=nothing; logspace::Bool=true)
             xm  = xi[1] - d
             xs = sqrt(xi[2]*xi[2] + ud2)
             xms =  logspace ? (xm,xs) : (10^xm, log(10) * xs * 10^xm )
-            xi .= xms
+            xx = (xx..., Composition(xms...))
         end 
     end
-    (; zip(elements, x)...)
+    (; zip(elements, xx)...)
 end
 

@@ -10,20 +10,23 @@ include("helpful-tuples.jl")
 export loadastromatdata, solartwins
 include("load-data.jl")
 
-export bsmean, bsmean!, bsresample, bsresample!, bootstrapelements, bootstrapratios
-include("resamplers.jl")
-
-export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements, fraction2ratio, ratio2fraction
-include("data-mgmt.jl")
-
-export ratiosummary
-include("results.jl")
-
 export solartwins, sun
 include("stars.jl")
 
 export LoddersFegley1998
 include("lodders.jl")
+
+export bsmean, bsmean!, bsresample, bsresample!, bootstrapelements, bootstrapratios
+include("resamplers.jl")
+
+export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements, fraction2ratio, ratio2fraction, Composition, Fractions
+include("data-mgmt.jl")
+
+export ratiosummary
+include("results.jl")
+
+export solarlogmix, solarmixmetropolis
+include("mix.jl")
 
 include("display.jl")
 

@@ -10,7 +10,7 @@ Optionally, provide `ratiocounts` calculated by [`countratios`](@ref) and a mini
 
 ---
 
-`NamedTuple(x)` for some `x = ratiosummary...` will convert the result to a NamedTuple.
+`NamedTuple(x)` for some `x = ratiosummary...` will convert the result to a NamedTuple of [`Composiiton`](@ref)s.
 
 """
 function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::NamedTuple=(;), minratios::Int=-1)
@@ -48,5 +48,4 @@ function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::Name
     (numerators,ms)
 end
 
-
-NamedTuple(x::Tuple{Vector{Symbol}, Matrix{Float64}}) = (; zip(x[1], [x[2][i,1:2] for i in axes(x[2],1)])...)
+NamedTuple(x::Tuple{Vector{Symbol}, Matrix{Float64}}) = (; zip(x[1], [Composition(x[2][i,:]...) for i in axes(x[2],1)])...)

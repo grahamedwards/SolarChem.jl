@@ -1,3 +1,31 @@
+"""
+
+    Composition
+
+Custom struct that contains a chemical composition, represented as the normally distributed mean `m` and standard deviation `s` of the measured/modeled composition.
+
+"""
+struct Composition
+    m::Float64
+    s::Float64
+end
+
+
+
+"""
+
+    Fractions(outer, sun)
+
+Custom struct with proposed mixture parameters: the fractional contribution of `outer` solar system material (inner solar system contribution = `1 - outer`) to the solar budget and the mass fraction of the `sun` worth of chondritic material added to the solar photosphere.
+
+"""
+struct Fractions
+    outer::Float64
+    sun::Float64
+end
+
+
+
 function Base.isnan(x::AbstractArray)
     y = true
     @inbounds @simd ivdep for i = eachindex(x)
