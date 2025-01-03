@@ -1,15 +1,17 @@
 """
 
-    solartwins(; gce=true)
+    solartwins(; gce=true, includesun=false)
 
-Returns a named tuple containing stellar parameters and solar-normalized compositions ([X/Fe], in dex) either corected for galactic chemical evolution (`gce=true`) or left uncorrected (`gce=false`). All corresponding uncertainty fields are preceded with `s`, e.g. `:Ca` and `:sCa` or `logg` and `slogg`.
+Returns a named tuple containing stellar parameters and solar-normalized compositions ([X/Fe], in dex) either corected for galactic chemical evolution (`gce=true`) or left uncorrected (`gce=false`). All corresponding uncertainty fields are preceded with `s`, e.g. `:Ca` and `:sCa` or `logg` and `slogg`. By default excludes the Sun (improves mixing model efficiency), but you can include solar data (mostly 0 dex by definition) with includesun=`true`.
 
 Data is compiled from Bedell + 2018 (*ApJ*, doi:[10.3847/1538-4357/aad908](https://doi.org/10.3847/1538-4357/aad908)). Where multiple species are reported (e.g. CI-CH, ScI-ScII, TiI-TiII, CrI-CrII), this reports the mean and quadrature-propagated uncertainties of the two species.
 
 """
-function solartwins(;gce::Bool=true)
+function solartwins(;gce::Bool=true, includesun::Bool=false)
 
     x = DelimitedFiles.readdlm(string(@__DIR__,"/../data/Bedell2018-solar-twins.csv"),',')
+
+    x = includesun ? x : x[1:end-1, :]
 
     @inbounds @simd ivdep for i=eachindex(x)
         xi = x[i]
