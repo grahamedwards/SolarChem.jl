@@ -91,7 +91,7 @@ function jump(p::Fractions, j::Fractions; rng::Random.AbstractRNG=Random.Xoshiro
         jv = getfield(j,jn) * randn(rng)
         jp = getfield(p,jn) + jv
     end
-    Fractions(ifelse(jn ==:outer, (jp, p.sun),(p.outer, jp))...), jn, abs(jv)
+    Fractions(ifelse(jn ==:outer, (jp, p.sun),(p.outer, jp))...), jn, jv
 end
 
 
@@ -184,7 +184,7 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
         end
 
         if log(rand(rng)) < (llϕ-ll) 
-            jumpup = jumpval*jumpscale
+            jumpup = abs(jumpval)*jumpscale
             j = Fractions(ifelse(jumpname==:outer,(jumpup,j.sun),(j.outer,jumpup))...)
             p, ll = ϕ, llϕ  # update proposal and log-likelihood  
         end
@@ -206,7 +206,7 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
 
         if log(rand(rng)) < (llϕ-ll) 
             n_acceptance += 1
-            jumpup = jumpval*jumpscale
+            jumpup = abs(jumpval)*jumpscale
             j = Fractions(ifelse(jumpname==:outer,(jumpup,j.sun),(j.outer,jumpup))...)
             p, ll = ϕ, llϕ  # update proposal and log-likelihood
         end

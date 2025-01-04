@@ -21,7 +21,7 @@ pt = jt = Fractions(0.8, 0.8)
 
 
 @test SolarChem.jump(pt, jt, rng=StableRNG(11))[2] == :outer
-@test SolarChem.jump(pt, jt, rng=StableRNG(11))[1].outer  == SolarChem.jump(pt, jt, rng=StableRNG(11))[3] + pt.outer
+@test SolarChem.jump(pt, jt, rng=StableRNG(11))[1].outer  ==  SolarChem.jump(pt, jt, rng=StableRNG(11))[3] + pt.outer
 
 
 @test solarlogmix(Composition(.003,1e-4), Composition(.04, 1e-3), Composition(0.3, .03), pt)[1] ≈ log10((pt.sun * (0.003 * (1-pt.outer) + .04 * pt.outer) + 0.3)/(pt.sun+1)/0.3)[1]
