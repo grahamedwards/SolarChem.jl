@@ -4,15 +4,15 @@
 
 # lldist interior
 
-@test -0.59 > SolarChem.lldist(2.,1., 3.,1.,n=100) > -0.6 
+@test -1.5 > SolarChem.lldist(2.,1., 3.,1.,n=100) > -1.6 
 
 @test abs(SolarChem.lldist(2.,1., 3.,1.,n=1000) - SolarChem.lldist(2.,1., 3.,1.)) < 0.0001 
 
 # lldist outer
 
-tm,ts = [2., 2., NaN, 2.], [1., 1., 1., NaN]
+tm,ts = [2., 2., 2.], [1., 1., 1.]
 
-@test SolarChem.lldist(tm, ts, 3., 1.,n=100) ≈ 2*SolarChem.lldist(2.,1., 3.,1.,n=100)
+@test SolarChem.lldist(tm, ts, 3., 1.,n=100) ≈ 3*SolarChem.lldist(2.,1., 3.,1.,n=100)
 
 @test SolarChem.lldist(tm, ts, 3., NaN) == SolarChem.lldist(tm, ts, NaN, 1.) == 0
 

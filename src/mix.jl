@@ -22,7 +22,7 @@ Calculate the probability density of `x` given a normal distribution with mean `
 ``\\mathcal{L}(\\mu \\pm \\sigma | x ) = f(x | \\mu \\pm \\sigma) = \\frac{e^{-\\frac{1}{2} \\left( \\frac{x-\\mu}{\\sigma}\\right)}}{\\sigma\\sqrt{2\\pi}}``
 
 """
-normpdf(x::T, m::T, s::T) where T<:Float64 = (0.3989422804014327/s) * exp(-(x-m)*(x-m)/(2.0*s*s)) # 1/sqrt(2π) = 0.3989422804014327 
+normpdf(x::T, m::T, s::T) where T<:Float64 = (0.3989422804014327/s) * exp(fastll(x,m,s)) # 1/sqrt(2π) = 0.3989422804014327 
 
 
 
@@ -40,34 +40,31 @@ fastll(x::T, m::T, s::T) where T<:Float64 = -(x-m)*(x-m)/(2.0*s*s)
 
     lldist(μ, σ, μₒ, σₒ; n=100)
 
-Calculates the log-likelihood that the normally distributed measurement(s) `μ` ± `σ` was/were drawn from the model composition `μₒ` ± `σₒ`, integrated over `n` nodes of the 3σ limits of the two distributions. 
+Calculates the log-likelihood that the normally distributed measurement(s) `μ` ± `σ` was/were drawn from the model composition `μₒ` ± `σₒ`, integrated over `n` nodes of the 3σ limits of the model distribution. 
 
-Accepts discrete `Float64` values or vectors of `Float64`s for `μ` and `σ`. Values of `NaN` are ignored and do not contribute to log-likelihood calculations.
+Accepts discrete `Float64` values or vectors of `Float64`s for `μ` and `σ`. Values of `NaN` in modeled data are ignored and do not contribute to log-likelihood calculations.
 
 see also: [`normpdf`](@ref)
 
 """
 function lldist(m::Float64, s::Float64, mo::Float64, so::Float64; n::Int=100)   
-    l = 0.
-    nsigs = 3.
-    siglims = m-nsigs*s, m+nsigs*s, mo-nsigs*so, mo+nsigs*so
-    xmin, xmax = extrema(siglims)
-    x = LinRange(xmin, xmax, n)
-    @inbounds @simd for i = eachindex(x)
-        l += @inline exp(fastll(x[i],m,s) + fastll(x[i], mo, so))
-    end
-    log(l * 0.3989422804014327 * (xmax-xmin)/(s * so * (n-1))) # scale by Δx [Δx = (xmax-xmin)/(n-1) ] and divide by sqrt(2π)*σ*σₒ
+        likelihood = 0.
+        nsigs = 3.0 * s 
+        x = LinRange(m-nsigs, m+nsigs, n)
+        Δx = step(x)
+        @inbounds for xi in x
+            likelihood += exp(SolarChem.fastll(xi, mo, so) + SolarChem.fastll(xi, m, s))
+        end
+        L = Δx * likelihood * 0.15915494309189535 /(s*so)
+        log(ifelse(iszero(L), eps(), L)) # scale by Δx and divide by 2π*σ*σₒ (2π = sqrt(2π)^2)
 end
 
 function lldist(m::Vector{Float64}, s::Vector{Float64}, mo::Float64, so::Float64; n::Int=100)
     @assert length(m) === length(s)
     ll = 0.
-    if !isnan(mo) & !isnan(so)
+    if !isnan(mo+so)
         @inbounds for i= eachindex(m)
-            mi, si = m[i], s[i]
-            if !isnan(mi) & !isnan(si)
-                ll += lldist(mi, si, mo, so,n=n)
-            end
+            ll += lldist(m[i], s[i], mo, so,n=n)
         end
     end
     ll
@@ -79,7 +76,7 @@ end
 
     jump(p::Fractions, j::Fractions; rng)
 
-Perturb a random field of p (`outer`,`sun`) with a random gaussian jump with σ described by the corresponding field in `j`. Ensures that the new proposal satisfies that `0 < outer < 1` and `0 < sun < 1`. Optionally supply a random number generation seed `rng`.
+Perturb a random field of p (`outer`,`sun`) with a random gaussian jump σ described by the corresponding field in `j`. Ensures that the new proposal satisfies that `0 < outer < 1` and `0 < sun < 1`. Optionally supply a random number generation seed `rng`.
 
 see also: [`Fractions`](@ref)
 
@@ -94,7 +91,7 @@ function jump(p::Fractions, j::Fractions; rng::Random.AbstractRNG=Random.Xoshiro
         jv = getfield(j,jn) * randn(rng)
         jp = getfield(p,jn) + jv
     end
-    Fractions(ifelse(jn ==:outer, (jp, p.sun),(p.outer, jp))...), jn, jv
+    Fractions(ifelse(jn ==:outer, (jp, p.sun),(p.outer, jp))...), jn, abs(jv)
 end
 
 
@@ -132,23 +129,35 @@ end
 Metropolis algorithm to estimate the requisite mixture of chondritic components added to the solar photosphere to match it to solar twin compositions.
 
 """
-function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Fractions, innersolarsystem::NamedTuple, outersolarsystem::NamedTuple; burnin::Int=0, solarunc::Bool=true, stars=solartwins())
+function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Fractions, innersolarsystem::NamedTuple, outersolarsystem::NamedTuple; burnin::Int=0, solarunc::Bool=true, stars=solartwins(), rng::Random.AbstractRNG=Random.Xoshiro())
 
     jumpscale=2.9
 
     iss = innersolarsystem
     oss = outersolarsystem
 
+# Ensure that any elements from kstars missing in ksol are added to i/oss as NaN compositions. This helps the markov chain stay flexible and run smoothly. Also flags NaN and 0 values in stars. 
     @assert keys(iss) == keys(oss)
     ksol = keys(iss)
     kstars = keys(stars)
     add_el, pt = (), periodictable()
     @inbounds for i = kstars
-        if i ∈ pt && i ∉ ksol
-            add_el = (add_el...,i)
+        if i ∈ pt 
+            @inbounds for ii = eachindex(stars[i])
+                iszero(stars[Symbol(:s,i)][ii]) && @warn "σ=0 value for $i (row $ii) in prior dataset. Unintended results likely."
+
+                isnan(stars[Symbol(:s,i)][ii]) && @warn "σ=0 value for $i (row $ii) in prior dataset. Unintended results likely."
+
+                isnan(stars[i][ii]) && @warn "NaN value for $i (row $ii) in prior dataset. Unintended results likely."
+
+            end
+    
+            if i ∉ ksol
+                add_el = (add_el...,i)
+            end
         end
     end
-    addnt = NamedTuple{add_el}((Composition(NaN,NaN) for i = length(add_el)))
+    addnt = NamedTuple{add_el}((Composition(NaN,NaN) for i = eachindex(add_el)))
     iss, oss = (; iss..., addnt...), (; oss..., addnt...)
     ksol = keys(iss)
 
@@ -157,8 +166,8 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
     p, j = proposal, jumpsize
     ϕ = p 
     llϕ = zero(Float64)
-    @inbounds @batch reduction = ((+,llϕ)) for j = eachindex(ksol) # 
-        el = ksol[j]
+    @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol)  
+        el = ksol[ii]
         slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
         llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)
     end
@@ -168,15 +177,15 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
         ϕ,jumpname,jumpval = jump(p,j;rng=rng)
 
         llϕ = zero(ll)
-        @inbounds @batch reduction = ((+,llϕ)) for j = eachindex(ksol) # 
-            el = ksol[j]
+        @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol) 
+            el = ksol[ii]
             slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
             llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)
         end
 
         if log(rand(rng)) < (llϕ-ll) 
             jumpup = jumpval*jumpscale
-            j = Fractions(ifelse(jumpname==:outer,(jumpup,f.sun),(f.outer,jumpup))...)
+            j = Fractions(ifelse(jumpname==:outer,(jumpup,j.sun),(j.outer,jumpup))...)
             p, ll = ϕ, llϕ  # update proposal and log-likelihood  
         end
     end 
@@ -189,8 +198,8 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
     @inbounds for i = 1:chainsteps
         ϕ,jumpname,jumpval = jump(p,j;rng=rng)
         llϕ = zero(ll)
-        @inbounds @batch reduction = ((+,llϕ)) for j = eachindex(ksol) # 
-            el = ksol[j]
+        @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol)
+            el = ksol[ii]
             slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
             llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)
         end
@@ -198,10 +207,10 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
         if log(rand(rng)) < (llϕ-ll) 
             n_acceptance += 1
             jumpup = jumpval*jumpscale
-            j = Fractions(ifelse(jumpname==:outer,(jumpup,f.sun),(f.outer,jumpup))...)
+            j = Fractions(ifelse(jumpname==:outer,(jumpup,j.sun),(j.outer,jumpup))...)
             p, ll = ϕ, llϕ  # update proposal and log-likelihood
         end
         vouter[i], vsun[i], vll[i] = p.outer, p.sun, ll
     end
-    (; outer=vouter, sun=vsun, ll=vll, acceptance=n_acceptance/chainsteps)
+    (; outer=vouter, sun=vsun, ll=vll, acceptance=n_acceptance/chainsteps, lastjump=j)
 end

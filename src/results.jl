@@ -49,3 +49,40 @@ function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::Name
 end
 
 NamedTuple(x::Tuple{Vector{Symbol}, Matrix{Float64}}) = (; zip(x[1], [Composition(x[2][i,:]...) for i in axes(x[2],1)])...)
+
+
+
+"""
+
+    removefrom(s, x)
+
+Remove key `s` and corresponding value from NamedTuple `x`. Alerts user if `s` is not present in `x`.
+
+---
+```julia
+julia> removefrom(:c, (; a=1, b=2, c=3))
+(a = 1, b = 2)
+
+julia> removefrom(:c, (; a=1, b=2))
+`:c` is not present in this NamedTuple
+(a = 1, b = 2)
+```
+
+"""
+function removefrom(s::Symbol, x::NamedTuple)
+    k = keys(x)
+    if s in k
+        kout = out = ()
+        @inbounds for i in k
+            if s != i
+                kout = (kout..., i )
+                out = (out..., x[i])
+            end
+        end
+        y = (; zip(kout, out)...)
+    else
+        println("`:$s` is not present in this NamedTuple")
+        y = x
+    end
+    y
+end

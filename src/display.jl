@@ -9,6 +9,8 @@ function Base.display(x::NamedTuple)
             println("::NamedTuple{$(eltype(xi))} of length $(length(xi))")
         elseif xi isa Composition
             println(" = Composition($(xi.m), $(xi.s))")
+        elseif xi isa Fractions
+            println(" = Fractions($(xi.outer), $(xi.sun))")
         elseif xi isa AbstractRange 
             println("::$(typeof(xi)) = $xi")
         elseif length(xi) > 5

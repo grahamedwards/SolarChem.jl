@@ -22,7 +22,7 @@ include("resamplers.jl")
 export calcweights, estimateuncertainty, trimnans, trimextremes, pulltopic, pulltype, pullgroup, exclude, excludeheated, countratios, countmeasurements, fraction2ratio, ratio2fraction, Composition, Fractions
 include("data-mgmt.jl")
 
-export ratiosummary
+export ratiosummary, removefrom
 include("results.jl")
 
 export solarlogmix, solarmixmetropolis
