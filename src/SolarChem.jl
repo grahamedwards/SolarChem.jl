@@ -28,6 +28,8 @@ include("results.jl")
 export solarlogmix, solarmixmetropolis
 include("mix.jl")
 
+include("classic-stats.jl")
+
 include("display.jl")
 
 function __init__()
