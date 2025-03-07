@@ -100,7 +100,7 @@ end
 
     solarlogmix(inner, outer, solar, f::Fractions; solarunc=true)
 
-Calculate the solar photosphere-normalized composition of a model Sun that ingests `f.sun` M⊙ of chondritic material comprised of `f.outer` proportion of `outer` solar system composition and `1 - f.outer` proportion of `inner` solar system composition. The args `inner`, `outer`, and `solar` are all instances of a [`Composition'](@ref) struct. 
+Calculate the solar photosphere-normalized composition of a model Sun that ingests `f.sun` M⊙ of chondritic material comprised of `f.outer` proportion of `outer` solar system composition and `1 - f.outer` proportion of `inner` solar system composition. The args `inner`, `outer`, and `solar` are all instances of a [`Composition`](@ref) struct. 
 
 The result is reported in dex, as the ratio of log-ratios: `log10(X/D) - log10(X⊙/D⊙)` where `D` denotes the ratio divisor (e.g. Fe, H) and ⊙ denotes solar compositions.
 
