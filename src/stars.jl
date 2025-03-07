@@ -63,8 +63,22 @@ function solartwins(;gce::Bool=true, includesun::Bool=false)
 end
 
 
+"""
+    SolarChem.lingce(m, b, age, x)
+
+Recalculate the composition of element `x` for a star of a given `age`, correcting for galactic chemical evolution (GCE) with a linear regression of slope `m` and intercept `b`.
+
+"""
 lingce(m::Number,b::Number,age::Number, x::Number) = x - (m*age+b)
 
+
+"""
+    SolarChem.quadgce(a, b, age, x)
+
+Recalculate the composition of element `x` for a star of a given `age`, correcting for galactic chemical evolution (GCE) using a quadratic regression with parameters `a` and `b` of the form: ``at + bt^2``
+
+
+"""
 function quadgce(aa::Number, bb::Number, age::Number, x::Number)
     da = age-4.6
     x - da*(aa + bb * da)
