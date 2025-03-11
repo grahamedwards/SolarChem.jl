@@ -28,9 +28,12 @@ end
 
     unweightedmean(m, s)
 
-Given values `m` (e.g. measurement means) with absolute 1σ uncertainties `s`, returns the unweighted mean and 1σ uncertainty estimated by addition in quadrature. 
+Given values `m` (e.g. measurement means) with absolute 1σ uncertainties `s`, returns the unweighted mean and 1σ standard error of the mean, estimated by addition in quadrature. 
 
-``\\sigma = \\sqrt{\\sum^n_{i=1} s_i^2}``
+``\\sigma = \\sqrt{\\frac{1}{n}\\sum^n_{i=1} s_i^2}``
 
 """
-unweightedmean(m::Vector, s::Vector) = (Statistics.mean(m), sqrt(sum(s.^2)))
+function unweightedmean(m::Vector, s::Vector)
+    @assert length(m) === length(s)
+    Statistics.mean(m), sqrt(sum(s.^2)/length(s))
+end
