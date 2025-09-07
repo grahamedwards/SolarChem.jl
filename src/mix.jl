@@ -166,7 +166,7 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
     p, j = proposal, jumpsize
     ϕ = p 
     llϕ = zero(Float64)
-    @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol)  
+    @inbounds Polyester.@batch reduction = ((+,llϕ)) for ii = eachindex(ksol)  
         el = ksol[ii]
         slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
         llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)
@@ -177,7 +177,7 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
         ϕ,jumpname,jumpval = jump(p,j;rng=rng)
 
         llϕ = zero(ll)
-        @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol) 
+        @inbounds Polyester.@batch reduction = ((+,llϕ)) for ii = eachindex(ksol) 
             el = ksol[ii]
             slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
             llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)
@@ -198,7 +198,7 @@ function solarmixmetropolis(chainsteps::Int, proposal::Fractions, jumpsize::Frac
     @inbounds for i = 1:chainsteps
         ϕ,jumpname,jumpval = jump(p,j;rng=rng)
         llϕ = zero(ll)
-        @inbounds @batch reduction = ((+,llϕ)) for ii = eachindex(ksol)
+        @inbounds Polyester.@batch reduction = ((+,llϕ)) for ii = eachindex(ksol)
             el = ksol[ii]
             slm = solarlogmix(iss[el], oss[el], s[el], ϕ, solarunc=solarunc)
             llϕ += lldist(stars[el],stars[Symbol(:s,el)], slm...)

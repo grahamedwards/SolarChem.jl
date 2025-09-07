@@ -1,4 +1,197 @@
 """
+
+    unitconversionfactor(str; io=stdout)
+
+Returns a unit conversion factor to scale measurements by to convert to mass fraction abundance based on the unit given in the heading `str`. By default, notifies user if a unit is ignored. 
+
+includes: wt% (%, %m/m), mg/g, μg/g (ppm), ng/g (ppb), pg/g
+excludes: at%, vol%, per mil, Ma, etc...
+
+
+"""
+function unitconversionfactor(s::AbstractString; io::IO=stdout)
+
+    f = ifelse(occursin("wt%",s), 0.01, NaN)
+    f = ifelse(occursin("%",s), 0.01, f) # assume -> wt%
+    f = ifelse(occursin("%m/m",s), 0.01, f) # assume -> wt%
+    
+    f = ifelse(occursin("mg/g",s), 1e-3, f)
+
+    f = ifelse(occursin("μg/g",s), 1e-6, f)
+    f = ifelse(occursin("ppm",s), 1e-6, f)
+    
+    f = ifelse(occursin("ppb",s), 1e-9, f)
+    f = ifelse(occursin("ng/g",s), 1e-9, f)
+    
+    f = ifelse(occursin("pg/g",s), 1e-12, f)
+
+    isnan(f) && printstyled(io, "Caution: No concentration unit identified for `$s` [excluded from dataset, see ?unitconversionfactor for accepted units]\n", color=:yellow)
+
+    f
+end
+
+
+
+"""
+
+"""
+function GetAstromatData(; url::String="https://api.astromat.org/v4/search/results?analysisTypes=rock%3A%3A[WHOLE+ROCK]&taxons=METEORITE&variables=MAJ||REE||TE||VO", datasets_per_request::Int = 1000, save::Union{String,Bool}=true)
+
+    url = string(url,"&size=$datasets_per_request")
+
+    save, filesavelocation = if save isa AbstractString 
+        fp, fn = splitdir(save)
+        @assert ispath(filepath) "Invalid filepath provided: '$fp/' does not exist"
+        true, save
+    elseif save
+        true, joinpath(pwd(),"astromat-$(Dates.today()).jls")
+    else
+        false, nothing
+    end
+
+    numlookup = let
+        tnn = DelimitedFiles.readdlm(joinpath(@__DIR__,"..","data","astromat","taxon-num-name.txt"),'\t', skipstart=1)
+        nums = Vector{Union{String,Int}}(undef, size(tnn)[1])
+        rawtaxon = Vector{String}(undef, size(tnn)[1])
+        tps = Vector{Vector{Int}}(undef,size(tnn)[1])
+        grps = Vector{Vector{Symbol}}(undef,size(tnn)[1])
+        @inbounds for i = axes(tnn)[1]
+            num, grp, tp, txn = @view tnn[i,:]
+            nums[i] = Int(num) #isa Number ? Int(num) : String(num)
+            grps[i] = Symbol.(split(grp, ','))
+            tps[i] = digits(ifelse(isempty(tp),0, tp))
+            rawtaxon[i] = string(txn)
+        end 
+
+        Dict( nums .=> [[grps[i], tps[i], rawtaxon[i]] for i = eachindex(nums)])
+    end
+
+
+    ellookup = Dict(string.(periodictable()) .=> periodictable())
+    ellookup["FeTOT"] = :Fe
+
+    oxidelookup = Dict("CaO" => :Ca, "Na2O" => :Na, "NiO" => :Ni, "CoO" => :Co, "MgO" => :Mg, "FeO" => :Fe,  "Fe2O3" => :Fe3, "SiO2" => :Si, "Al2O3" => :Al, "MnO" => :Mn, "Cr2O3" => :Cr, "TiO2" => :Ti, "K2O" => :K , "P2O5" => :P)
+
+
+    # https://astromat.org/synthesis?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE&variables=MAJ||REE||TE||VO
+
+
+    io = IOBuffer()
+    jsn = JSON3.read( String( take!( Downloads.download(url, io) ) ) )# formerly String(HTTP.get(url).body)
+
+    n = jsn[:count]
+
+    name = Vector{String}(undef, n)
+    comment, citation, dataset = similar(name), similar(name), similar(name)
+    group = Vector{Vector{Symbol}}(undef,n)
+    type = Vector{Vector{Int}}(undef,n)
+    taxon = similar(name)
+
+    meas = NamedTuple{periodictable()}(fill(NaN,n) for i = eachindex(periodictable()))
+    uncs = deepcopy(meas)
+
+    ignored = []
+
+    ind = 0 # running index of output dataset
+
+    pbar = Term.Progress.ProgressBar(;columns=:detailed)
+    job = Term.Progress.addjob!(pbar; N=ceil(Int,n/datasets_per_request))
+    Term.Progress.start!(pbar)
+    Term.Progress.render(pbar)
+    while !isnothing(jsn[:afterKey])
+        @inbounds for i = eachindex(jsn[:data])
+            ind += 1
+            temptest = jsn[:data][i][:temperature]
+            heated = jsn[:data][i][:heated]
+            isnothing(temptest) || @warn "Non-nothing temperature of $temptest"
+            isnothing(heated) || @warn "heated value of $heated"
+
+
+            name[ind] = jsn[:data][i][:sample][:sampleName] # jsn[:data][i][:sample][:sampleName], jsn[:data][i][:sample][:sampleCode], jsn[:data][i][:rootParent]
+            comment[ind] = ifelse(isnothing(jsn[:data][i][:analysisComment]), "", jsn[:data][i][:analysisComment])
+            citation[ind] = string("https://astromat.org/synthesis/citation/",jsn[:data][i][:citation][:id])
+            dataset[ind] = jsn[:data][i][:dataset][:datasetTitle]
+            group[ind], type[ind], taxon[ind] = numlookup[jsn[:data][i][:sample][:taxon][1][:num]]
+
+            @inbounds for j = eachindex(jsn[:data][i][:variables])
+                variable = jsn[:data][i][:variables][j][:variable]
+                value = jsn[:data][i][:variables][j][:valueMeas]
+                unit = jsn[:data][i][:variables][j][:unit]
+
+                stdevUnit = jsn[:data][i][:variables][j][:stdevUnit]
+                
+                stdevType = jsn[:data][i][:variables][j][:stdevType]
+                stdevType = ifelse(isnothing(stdevType), "", stdevType)
+
+                stdevValue = jsn[:data][i][:variables][j][:stdevValue]
+                try 
+                    stdevValue =  parse(Float64, stdevValue)
+                catch
+                    stdevValue = NaN 
+                end
+
+                value *= SolarChem.unitconversionfactor(unit; io=devnull)
+
+                stdevValue *= ifelse(contains(stdevType, "REL"), value, SolarChem.unitconversionfactor(stdevUnit, io=devnull)) 
+                stdevValue *= ifelse(contains(stdevType, "2"), 0.5, one(stdevValue)) 
+                    # uncertaintynames = ("1S",  "REL", "2S", "2S-ABS", "S-REL")
+
+                if variable ∈ keys(oxidelookup)
+                    el = oxidelookup[variable]
+                    oxc =  SolarChem.oxideconversion[el] 
+                    el = ifelse(el==:Fe3, :Fe, el)
+                    meas[el][ind] =  value * oxc
+                    uncs[el][ind] = stdevValue * oxc
+                elseif variable ∈ keys(ellookup)
+                    el = ellookup[variable]
+                    meas[el][ind] = value
+                    uncs[el][ind] = stdevValue
+                elseif variable ∉ ignored
+                    push!(ignored,variable)
+                end
+            end
+        end
+
+        newrl = string(url,"&afterKey=", jsn[:afterKey][:batchId])
+        jsn = JSON3.read( String( take!( Downloads.download(newrl, io) ) ) )
+        Term.Progress.update!(job)
+        Term.Progress.render(pbar)
+    end
+    Term.Progress.stop!(pbar)
+    
+
+    indout = Base.OneTo(ind)
+    
+    dataout = Vector{Vector{Float64}}(undef,2*length(meas))
+    namesout = Vector{Symbol}(undef, length(dataout))
+
+    ii=0
+    for i = eachindex(meas)
+        namesout[ii+1], namesout[ii+2] = (i, Symbol(:s,i))
+        dataout[ii+1] = meas[i][indout]
+        dataout[ii+=2] = uncs[i][indout]
+    end
+
+
+    namesout = (:name, :group, :type, :taxon, :citation, :dataset, :comment, namesout...)
+    dataout = (name[indout], group[indout], type[indout], taxon[indout], citation[indout], dataset[indout], comment[indout], dataout...)
+    out = NamedTuple{namesout}(dataout)
+
+    if save
+        Serialization.serialize(save,)
+        print("\nData saved locally to:")
+        println(Term.@cyan Term.@bold filesavelocation)
+    else
+        println(Term.@cyan Term.@bold "\nData was not saved locally.")
+    end
+
+    return showskipped ? (out, ignored) : out
+end
+
+
+
+
+"""
 loadastromatdata(file::String)
 
 Load data exported from Astromat as a csv. Given underlying group and type assignment functions, this will only load chondrite data. 
@@ -129,42 +322,7 @@ end
 
 
 
-## Supporting Functions:
-
-
-"""
-
-    unitconversionfactor(str)
-
-Returns a unit conversion factor to scale measurements by to convert to mass fraction abundance based on the unit given in the heading `str`. 
-
-includes: wt% (%, %m/m), mg/g, μg/g (ppm), ng/g (ppb), pg/g
-excludes: at%, vol%
-
-
-"""
-function unitconversionfactor(s::AbstractString)
-
-    f = ifelse(occursin("wt%",s), 0.01, NaN)
-    f = ifelse(occursin("%",s), 0.01, f) # assume -> wt%
-    f = ifelse(occursin("%m/m",s), 0.01, f) # assume -> wt%
-    
-    f = ifelse(occursin("mg/g",s), 1e-3, f)
-
-    f = ifelse(occursin("μg/g",s), 1e-6, f)
-    f = ifelse(occursin("ppm",s), 1e-6, f)
-    
-    f = ifelse(occursin("ppb",s), 1e-9, f)
-    f = ifelse(occursin("ng/g",s), 1e-9, f)
-    
-    f = ifelse(occursin("pg/g",s), 1e-12, f)
-
-    isnan(f) && printstyled("Caution: No concentration unit identified for heading `$s`  [excluded from dataset, see ?unitconversionfactor for accepted units]\n", color=:yellow)
-
-    f
-end
-
-
+## Supporting functions for `loadastromatdata`
 
 """
 

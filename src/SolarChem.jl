@@ -1,8 +1,10 @@
 module SolarChem
 
-import Random, DelimitedFiles, Requires
-import Statistics
-using Polyester: @batch # for speed
+import  Random, Statistics, DelimitedFiles, Downloads, Serialization, Dates, # standard library
+        Requires, # for data viz
+        JSON3, # for handling data from astromat api
+        Term, # to track astromat download progress
+        Polyester # for speed
 
 export periodictable, majors, heavysolar, lightsolar, mediumsolar, allsolar
 include("helpful-tuples.jl")
