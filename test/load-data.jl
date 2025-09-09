@@ -1,3 +1,32 @@
+#= Things to test in astromatdata()
+    1. Downloads data
+    2. group and type association
+    3. Appropriate conversions
+    4. citation affiliation
+=#
+
+url="https://api.astromat.org/v4/search/results?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE::[H5]&variables=MAJ||REE&sampleNames=ADAMS+COUNTY||SAHARA+97035"
+# Data available at: https://astromat.org/synthesis?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE::[H5]&variables=MAJ||REE&sampleNames=ADAMS+COUNTY||SAHARA+97035
+
+amd = astromatdata(url=url,save=false,)
+
+@test "ADAMS COUNTY" in amd.name
+@test amd.group[1][1] === :H
+@test amd.type[1][1] === 5
+@test amd.Mn[3] ≈ 0.2077 /100
+@test amd.Ti[2] ≈ 0.11 * SolarChem.oxideconversion.Ti/100
+
+@test amd.K[3] ≈ 0.091/100
+@test amd.sK[3] ≈ 0.002/100
+@test amd.Yb[3] ≈ 0.217e-6
+@test amd.sYb[3] ≈ 5e-9
+@test amd.citation[3] == "https://astromat.org/synthesis/citation/cgEP74UB_AwVtctyePV2"
+
+
+####################################
+### Tests for deprecated methods ###
+####################################
+
 ## Groups 
 @test SolarChem.assigngroup("EH-IMP MELT") == (:EH,)
 @test SolarChem.assigngroup("EH4") == (:EH,)
@@ -68,7 +97,7 @@
     5. One relative uncertainty, one S absolute, and one 2S uncertainty.
     6. One no uncertainty column. 
 =#
-testromat = loadastromatdata("testromat.csv")
+testromat = SolarChem.loadastromatdata("testromat.csv")
 
 @test keys(testromat) === (:name, :group, :type, :comment, :citation, :dataset, :Ca, :Fe, :sFe, :Cu, :sCu, :U, :sU)
 @test testromat.name == ["Rock", "Em", "Sock", "Em", "Robots"]

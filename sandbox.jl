@@ -3,7 +3,7 @@
 using SolarChem
 import Serialization
 
-x = loadastromatdata();
+x = SolarChem.loadastromatdata();
 lf = LoddersFegley1998()
 # Serialization.serialize("workshop/astromat.cereal", loadastromatdata())
 # x = Serialization.deserialize("workshop/astromat.cereal")
@@ -53,10 +53,16 @@ outerFe = ratiosummary(bse, bsr)
 iss, oss = NamedTuple(innerFe), NamedTuple(outerFe)
 iss, oss = removefrom(:C, iss), removefrom(:C, iss);
 
-
-
-
-
 p = Fractions(.2,.2)
 j = Fractions(.001,0.001)
 out = solarmixmetropolis(10_000, p, j, iss, oss, burnin=10_000)
+
+
+
+
+## Setting up tests for astromatdata
+
+using SolarChem
+
+
+

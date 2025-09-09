@@ -1,47 +1,31 @@
-"""
-
-    unitconversionfactor(str; io=stdout)
-
-Returns a unit conversion factor to scale measurements by to convert to mass fraction abundance based on the unit given in the heading `str`. By default, notifies user if a unit is ignored. 
-
-includes: wt% (%, %m/m), mg/g, μg/g (ppm), ng/g (ppb), pg/g
-excludes: at%, vol%, per mil, Ma, etc...
-
 
 """
-function unitconversionfactor(s::AbstractString; io::IO=stdout)
 
-    f = ifelse(occursin("wt%",s), 0.01, NaN)
-    f = ifelse(occursin("%",s), 0.01, f) # assume -> wt%
-    f = ifelse(occursin("%m/m",s), 0.01, f) # assume -> wt%
+```julia
+    astromatdata(; url, datasets_per_request=1000, save=true, showskipped=false)
+```
+
+Get elemental geochemical data (only) from the AstroMat database for all meteorites, returned as a NamedTuple. The default `url` string is:
+
+"https://api.astromat.org/v4/search/results?analysisTypes=rock%3A%3A[WHOLE+ROCK]&taxons=METEORITE&variables=MAJ||REE||TE||VO"
+
+This requests whole rock major (MJ), volatile (VO), trace (TE), and rare earth element (REE) data for all meteorites in the database. You may provide your own customized API string, but this is not recommended unless you are familiar with the AstroMat API.
+
+By default, the function requests 1000 `datasets_per_request`, which is a roughly optimized amount.
+
+When `save` is set to `true` or provided with a filepath, the data is serlialized to the provided filepath or to a file automatically labeled `astromat-YYYY-MM-DD.jls` (reflecting the current date). If `false` is provided, the output is not saved.
+
+When `showskipped` is `true`, returns a tuple of the data from astromat, as well as a list of excluded variable names.
+
+"""
+function astromatdata(; url::String="https://api.astromat.org/v4/search/results?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE&variables=MAJ||REE||TE||VO", datasets_per_request::Int = 1000, save::Union{String,Bool}=true, showskipped::Bool=false)
+
     
-    f = ifelse(occursin("mg/g",s), 1e-3, f)
-
-    f = ifelse(occursin("μg/g",s), 1e-6, f)
-    f = ifelse(occursin("ppm",s), 1e-6, f)
-    
-    f = ifelse(occursin("ppb",s), 1e-9, f)
-    f = ifelse(occursin("ng/g",s), 1e-9, f)
-    
-    f = ifelse(occursin("pg/g",s), 1e-12, f)
-
-    isnan(f) && printstyled(io, "Caution: No concentration unit identified for `$s` [excluded from dataset, see ?unitconversionfactor for accepted units]\n", color=:yellow)
-
-    f
-end
-
-
-
-"""
-
-"""
-function GetAstromatData(; url::String="https://api.astromat.org/v4/search/results?analysisTypes=rock%3A%3A[WHOLE+ROCK]&taxons=METEORITE&variables=MAJ||REE||TE||VO", datasets_per_request::Int = 1000, save::Union{String,Bool}=true)
-
     url = string(url,"&size=$datasets_per_request")
 
     save, filesavelocation = if save isa AbstractString 
-        fp, fn = splitdir(save)
-        @assert ispath(filepath) "Invalid filepath provided: '$fp/' does not exist"
+        fp, _ = splitdir(save)
+        @assert isdir(filepath) "Invalid filepath provided: '$fp/' does not exist"
         true, save
     elseif save
         true, joinpath(pwd(),"astromat-$(Dates.today()).jls")
@@ -115,7 +99,7 @@ function GetAstromatData(; url::String="https://api.astromat.org/v4/search/resul
 
             @inbounds for j = eachindex(jsn[:data][i][:variables])
                 variable = jsn[:data][i][:variables][j][:variable]
-                value = jsn[:data][i][:variables][j][:valueMeas]
+                value = float(jsn[:data][i][:variables][j][:valueMeas])
                 unit = jsn[:data][i][:variables][j][:unit]
 
                 stdevUnit = jsn[:data][i][:variables][j][:stdevUnit]
@@ -189,10 +173,51 @@ function GetAstromatData(; url::String="https://api.astromat.org/v4/search/resul
 end
 
 
+"""
+
+    unitconversionfactor(str; io=stdout)
+
+Returns a unit conversion factor to scale measurements by to convert to mass fraction abundance based on the unit given in the heading `str`. By default, notifies user if a unit is ignored. 
+
+includes: wt% (%, %m/m), mg/g, μg/g (ppm), ng/g (ppb), pg/g
+excludes: at%, vol%, per mil, Ma, etc...
 
 
 """
-loadastromatdata(file::String)
+function unitconversionfactor(s::AbstractString; io::IO=stdout)
+
+    f = ifelse(occursin("wt%",s), 0.01, NaN)
+    f = ifelse(occursin("%",s), 0.01, f) # assume -> wt%
+    f = ifelse(occursin("%m/m",s), 0.01, f) # assume -> wt%
+    
+    f = ifelse(occursin("mg/g",s), 1e-3, f)
+
+    f = ifelse(occursin("μg/g",s), 1e-6, f)
+    f = ifelse(occursin("ppm",s), 1e-6, f)
+    
+    f = ifelse(occursin("ppb",s), 1e-9, f)
+    f = ifelse(occursin("ng/g",s), 1e-9, f)
+    
+    f = ifelse(occursin("pg/g",s), 1e-12, f)
+
+    isnan(f) && printstyled(io, "Caution: No concentration unit identified for `$s` [excluded from dataset, see ?unitconversionfactor for accepted units]\n", color=:yellow)
+
+    f
+end
+
+
+######################
+##### DEPRECATED #####
+######################
+
+
+"""
+
+```julia
+    SolarChem.loadastromatdata(file::String)
+```
+
+DEPRECATED: use [`astromatdata`](@ref), which directly accesses the AstroMat API.
 
 Load data exported from Astromat as a csv. Given underlying group and type assignment functions, this will only load chondrite data. 
 

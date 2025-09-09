@@ -1,7 +1,7 @@
 name = "SolarChem"
 uuid = "9ef18092-565a-42fc-b100-617ad85a4fc1"
 authors = ["Graham Harper Edwards"]
-version = "0.1.0-DEV"
+version = "0.1.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"

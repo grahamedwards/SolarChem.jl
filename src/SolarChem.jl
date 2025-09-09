@@ -9,8 +9,8 @@ import  Random, Statistics, DelimitedFiles, Downloads, Serialization, Dates, # s
 export periodictable, majors, heavysolar, lightsolar, mediumsolar, allsolar
 include("helpful-tuples.jl")
 
-export loadastromatdata, solartwins
-include("load-data.jl")
+export astromatdata
+include("get-data.jl")
 
 export solartwins, sun
 include("stars.jl")

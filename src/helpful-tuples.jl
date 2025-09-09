@@ -27,7 +27,7 @@ periodictable() = (
 
     SolarChem.strelements
 
-A Tuple containing all elements in order of increasing Z (up to Z=96) as a `String` followed by a space. Derived from [`SolarChem.periodictable`](@ref) for use inside `loadastromatdata`. A `const` within the scope of the SolarChem module. 
+A Tuple containing all elements in order of increasing Z (up to Z=96) as a `String` followed by a space. Derived from [`SolarChem.periodictable`](@ref) for use inside `SolarChem.loadastromatdata`. A `const` within the scope of the SolarChem module. 
 
 """
 const strelements = string.(periodictable()," ")
