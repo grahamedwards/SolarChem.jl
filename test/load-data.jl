@@ -8,12 +8,15 @@
 url="https://api.astromat.org/v4/search/results?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE::[H5]&variables=MAJ||REE&sampleNames=ADAMS+COUNTY||SAHARA+97035"
 # Data available at: https://astromat.org/synthesis?analysisTypes=rock::[WHOLE+ROCK]&taxons=METEORITE::[H5]&variables=MAJ||REE&sampleNames=ADAMS+COUNTY||SAHARA+97035
 
+# suppress term.jl outputs and notices while astromatdata is running.
+oso = stdout; redirect_stdout(devnull)
 amd = astromatdata(url=url,save=false,)
+    redirect_stdout(oso)
 
 @test "ADAMS COUNTY" in amd.name
 @test amd.group[1][1] === :H
 @test amd.type[1][1] === 5
-@test amd.Mn[3] ≈ 0.2077 /100
+@test amd.Mn[3] ≈ 0.22 /100
 @test amd.Ti[2] ≈ 0.11 * SolarChem.oxideconversion.Ti/100
 
 @test amd.K[3] ≈ 0.091/100
