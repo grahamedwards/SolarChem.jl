@@ -91,7 +91,7 @@ function astromatdata(; url::String="https://api.astromat.org/v4/search/results?
             isnothing(heated) || @warn "heated value of $heated"
 
 
-            name[ind] = jsn[:data][i][:sample][:sampleName] # jsn[:data][i][:sample][:sampleName], jsn[:data][i][:sample][:sampleCode], jsn[:data][i][:rootParent]
+            name[ind] = jsn[:data][i][:sample][:sampleCode] # sampleCode is the official, normalized name as it is recognized in MetBull that was linked to the sampleName (the name that was given in the paper) by the curator.
             comment[ind] = ifelse(isnothing(jsn[:data][i][:analysisComment]), "", jsn[:data][i][:analysisComment])
             citation[ind] = string("https://astromat.org/synthesis/citation/",jsn[:data][i][:citation][:id])
             dataset[ind] = jsn[:data][i][:dataset][:datasetTitle]
