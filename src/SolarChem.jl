@@ -41,13 +41,14 @@ function __init__()
 
     Requires.@require Pluto="c3e4b0f8-55cb-11ea-2926-15256bba5781" begin
         """
-            inspect()
+            inspect(filepath)
 
-        Visually inspect Astromat data in a Pluto notebook environment to identify specific data of interest.
+        Generate and open a Pluto notebook environment to visually inspect Astromat data. Optionally provide a filepath to save the Pluto notebook to.
+
         """
         function inspect(filepath::AbstractString="") 
-            cpath = joinpath(homedir(),"solarchem-visual-inspection.jl")
-            cp(joinpath(@__DIR__,"..","visual-inspection.jl"),cpath, force=true)
+            cpath = joinpath(ifelse(isempty(filepath),homedir(),filepath),"solarchem-visual-inspection.jl")
+            cp(joinpath(@__DIR__,"visual-inspection.jl"),cpath, force=true)
             printstyled("\nPluto notebook created at: ", color=:magenta)
             println("$cpath\n")
             printstyled("Warning: ",color=:yellow)
