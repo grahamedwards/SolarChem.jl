@@ -45,7 +45,19 @@ function __init__()
 
         Visually inspect Astromat data in a Pluto notebook environment to identify specific data of interest.
         """
-        inspect() = Pluto.run(notebook=joinpath(@__DIR__,"../visual-inspection.jl"))
+        function inspect(filepath::AbstractString="") 
+            cpath = joinpath(homedir(),"solarchem-visual-inspection.jl")
+            cp(joinpath(@__DIR__,"..","visual-inspection.jl"),cpath, force=true)
+            printstyled("\nPluto notebook created at: ", color=:magenta)
+            println("$cpath\n")
+            printstyled("Warning: ",color=:yellow)
+            print("this notebook will be overwritten by future executions of ")
+            printstyled("inspect()", color=:cyan)
+            println(". Save a copy to preserve any changes.\n")
+            printstyled("Opening notebook...\n\n", bold=true)
+            
+            Pluto.run(notebook=cpath)
+        end
         export inspect
     end
 end
