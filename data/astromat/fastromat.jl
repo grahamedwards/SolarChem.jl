@@ -1,0 +1,1 @@
+SolarChem.Serialization.serialize("data/astromat/fastromat.jls", (astromatdata(save=false), SolarChem.Dates.today()))

@@ -10,8 +10,9 @@ url="https://api.astromat.org/v4/search/results?analysisTypes=rock::[WHOLE+ROCK]
 
 # suppress term.jl outputs and notices while astromatdata is running.
 oso = stdout; redirect_stdout(devnull)
-amd = astromatdata(url=url,save=false,)
-    redirect_stdout(oso)
+    amd = astromatdata(url=url,save=false,)
+    famd = fastromat()
+redirect_stdout(oso)
 
 @test "ADAMS COUNTY" in amd.name
 @test amd.group[1][1] === :H
@@ -25,6 +26,8 @@ amd = astromatdata(url=url,save=false,)
 @test amd.sYb[3] ≈ 5e-9
 @test amd.citation[3] == "https://astromat.org/synthesis/citation/cgEP74UB_AwVtctyePV2"
 
+
+@test famd isa NamedTuple
 
 ####################################
 ### Tests for deprecated methods ###

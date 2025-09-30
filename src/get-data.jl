@@ -1,3 +1,14 @@
+"""
+    fastromat()
+
+Quickly load the most recently archived output from [`astromatdata`](@ref). 
+"""
+function fastromat()
+    data, date = SolarChem.Serialization.deserialize(joinpath(@__DIR__,"..","data","astromat","fastromat.jls"));
+    printstyled("\nAstromat data accessed: ", Dates.format(date, "d u Y"), "\n\n"; color=:light_blue)
+    data
+end
+
 
 """
 
@@ -162,7 +173,7 @@ function astromatdata(; url::String="https://api.astromat.org/v4/search/results?
     out = NamedTuple{namesout}(dataout)
 
     if save
-        Serialization.serialize(save,)
+        Serialization.serialize(save,out)
         print("\nData saved locally to:")
         println(Term.@cyan Term.@bold filesavelocation)
     else
