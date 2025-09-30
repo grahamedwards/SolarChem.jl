@@ -29,16 +29,12 @@ catch
 end
 
 # ╔═╡ 402f9139-c4a8-40bb-b1bb-1f5ee4403876
-d0 = SolarChem.loadastromatdata()
-
-# ╔═╡ 8ebfb59e-b265-4cbe-9c16-9cdb36d4879a
-d1 = SolarChem.estimateuncertainty(SolarChem.trimextremes(d0),5);
-
-# ╔═╡ fe92d954-e36a-44ed-8ddc-ddb261836222
-d2 = SolarChem.exclude(d1, :comment, ("weather", "fusion")); # Exclude certain topics/comments: weather, fusion,
-
-# ╔═╡ 8be31a53-b8b3-41ef-b32c-856d367bc43c
-allmet = SolarChem.excludeheated(d2)
+allmet = let
+	d0 = fastromat()
+	d1 = SolarChem.estimateuncertainty(SolarChem.trimextremes(d0),5)
+	d2 = SolarChem.exclude(d1, :comment, ("weather", "fusion")); # Exclude certain topics/comments: weather, fusion,
+	SolarChem.excludeheated(d2)
+end
 
 # ╔═╡ 27b6830c-45f7-417a-9053-567d3264030d
 @bind grp Select([SolarChem.innergroups()..., SolarChem.outergroups()...])
@@ -100,9 +96,6 @@ end
 # ╔═╡ Cell order:
 # ╠═ff549afa-84cc-11f0-3c3c-2b34c3e18e70
 # ╠═402f9139-c4a8-40bb-b1bb-1f5ee4403876
-# ╠═8ebfb59e-b265-4cbe-9c16-9cdb36d4879a
-# ╠═fe92d954-e36a-44ed-8ddc-ddb261836222
-# ╠═8be31a53-b8b3-41ef-b32c-856d367bc43c
 # ╠═866cf5c5-fb81-47fd-a982-16c840be5e8d
 # ╠═83257936-e505-4f39-bed7-bfb681d5581b
 # ╟─1c2ea3b1-0029-4719-aa7b-9a4a657c0e9b
