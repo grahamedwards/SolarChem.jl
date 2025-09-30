@@ -48,7 +48,13 @@ function __init__()
         """
         function inspect(filepath::AbstractString="") 
             cpath = joinpath(ifelse(isempty(filepath),homedir(),filepath),"solarchem-visual-inspection.jl")
-            cp(joinpath(@__DIR__,"visual-inspection.jl"),cpath, force=true)
+            rm(cpath)
+
+            rvi = read(joinpath(@__DIR__,"visual-inspection.jl"), String)
+            open(cpath, "w") do io
+                write(io, rvi)
+            end
+
             printstyled("\nPluto notebook created at: ", color=:magenta)
             println("$cpath\n")
             printstyled("Warning: ",color=:yellow)
