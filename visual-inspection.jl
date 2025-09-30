@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.18
+# v0.20.19
 
 using Markdown
 using InteractiveUtils
@@ -26,7 +26,6 @@ catch
 	Pkg.add("PlutoUI")
 	Pkg.add(url="https://github.com/grahamedwards/SolarChem.jl", rev="main")
 	using SolarChem, PlutoUI
-	#import WGLMakie as Mke;
 end
 
 # ╔═╡ 402f9139-c4a8-40bb-b1bb-1f5ee4403876
