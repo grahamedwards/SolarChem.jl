@@ -48,7 +48,7 @@ function __init__()
         """
         function inspect(filepath::AbstractString="") 
             cpath = joinpath(ifelse(isempty(filepath),homedir(),filepath),"solarchem-visual-inspection.jl")
-            rm(cpath)
+            rm(cpath, force=true)
 
             rvi = read(joinpath(@__DIR__,"visual-inspection.jl"), String)
             open(cpath, "w") do io

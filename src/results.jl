@@ -1,6 +1,6 @@
 """
 
-    ratiosummary(resampled_measurements, resampled_ratios; ratiocounts, minratios)
+    ratiosummary(resampled_measurements, resampled_ratios; ratiocounts, minratios, NTout=false)
 
 Calculate ratio mean and standard deviation (1σ) from `resampled_measurements` calculated by [`bootstrapelements`](@ref) and `resampled_ratios` calculated by[`bootstrapratios`](@ref). 
 
@@ -8,12 +8,10 @@ If no ratios were calculated for a field in `resampled_ratios` (all values `NaN`
 
 Optionally, provide `ratiocounts` calculated by [`countratios`](@ref) and a minimum number of ratios `minratios` for each element required to use `resampled_ratios`. If the ratio counts for an element is less than `minratios`, μ/σ are calculated from the corressponding elements in `resampled_measurements`.
 
----
-
-`NamedTuple(x)` for some `x = ratiosummary...` will convert the result to a NamedTuple of [`Composition`](@ref)s.
+If `NTout=true`, returns a NamedTuple of [`Composition`](@ref)s. 
 
 """
-function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::NamedTuple=(;), minratios::Int=-1)
+function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::NamedTuple=(;), minratios::Int=-1, NTout::Bool=false)
 
     divisor = rsratio.divisor
 
@@ -45,10 +43,10 @@ function ratiosummary(rsmeas::NamedTuple, rsratio::NamedTuple; ratiocounts::Name
             Statistics.mean(rsratio[x]), Statistics.std(rsratio[x])
         end
     end
-    (numerators,ms)
+    return NTout ? 
+        (; zip(numerators, [Composition(ms[i,:]...) for i in axes(ms,1)])...) : 
+        (numerators,ms)
 end
-
-NamedTuple(x::Tuple{Vector{Symbol}, Matrix{Float64}}) = (; zip(x[1], [Composition(x[2][i,:]...) for i in axes(x[2],1)])...)
 
 
 

@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.20.19
+# v0.20.20
 
 using Markdown
 using InteractiveUtils
@@ -17,15 +17,13 @@ macro bind(def, element)
 end
 
 # ╔═╡ ff549afa-84cc-11f0-3c3c-2b34c3e18e70
-try 
-	using SolarChem, PlutoUI
-	import GLMakie as Mke;
-catch
+begin
 	import Pkg
-	Pkg.add("GLMakie")
+	Pkg.add("WGLMakie")
 	Pkg.add("PlutoUI")
 	Pkg.add(url="https://github.com/grahamedwards/SolarChem.jl", rev="main")
 	using SolarChem, PlutoUI
+	import WGLMakie as Mke
 end
 
 # ╔═╡ 402f9139-c4a8-40bb-b1bb-1f5ee4403876
@@ -36,26 +34,32 @@ allmet = let
 	SolarChem.excludeheated(d2)
 end
 
+# ╔═╡ 51e52d1e-1f4e-4946-aecc-36605a7dc383
+md"x-axis minimum"
+
+# ╔═╡ ba44ebed-fc78-4a2e-bc3e-43217f37010a
+md"x-axis maximum"
+
 # ╔═╡ 27b6830c-45f7-417a-9053-567d3264030d
-@bind grp Select([SolarChem.innergroups()..., SolarChem.outergroups()...])
+@bind grp Select(string.([SolarChem.innergroups()..., SolarChem.outergroups()...]))
 
 # ╔═╡ 866cf5c5-fb81-47fd-a982-16c840be5e8d
-groupdata = pullgroup(allmet,grp)
+groupdata = pullgroup(allmet,Symbol(grp))
 
 # ╔═╡ a653c3b5-c9e5-42d9-8014-2ccd38d8ff9f
-@bind el Select([SolarChem.periodictable()...])
+@bind el Select([string.(SolarChem.periodictable())...])
 
 # ╔═╡ 83257936-e505-4f39-bed7-bfb681d5581b
 d = let
-	d = groupdata[el]
+	d = groupdata[Symbol(el)]
 	d[.!isnan.(d)]
 end
 
 # ╔═╡ 1c2ea3b1-0029-4719-aa7b-9a4a657c0e9b
-@bind xmin PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(minimum(d), maximum(d), 100))
+@bind xmin PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(minimum(d), maximum(d), 100), show_value=true)
 
 # ╔═╡ a13bd2dd-d5c6-4dd7-8f83-a37301cd2125
-@bind xmax PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(xmin, maximum(d), 100), default=maximum(d))
+@bind xmax PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(xmin, maximum(d), 100), default=maximum(d), show_value=true)
 
 # ╔═╡ 13c6169f-1643-48a6-a296-be6116ed4272
 let 
@@ -75,7 +79,7 @@ let
 	report = "| Name  | Citation |\n|:-- |:-- |\n"
 	citations = ()
 	for i = eachindex(groupdata.name)
-		if xmin <= groupdata[el][i] <= xmax
+		if xmin <= groupdata[Symbol(el)][i] <= xmax
 			citations = (citations..., groupdata.citation[i])
 			report *= string(groupdata.name[i], 
 							 " | [", 
@@ -95,12 +99,14 @@ end
 
 # ╔═╡ Cell order:
 # ╠═ff549afa-84cc-11f0-3c3c-2b34c3e18e70
-# ╠═402f9139-c4a8-40bb-b1bb-1f5ee4403876
-# ╠═866cf5c5-fb81-47fd-a982-16c840be5e8d
-# ╠═83257936-e505-4f39-bed7-bfb681d5581b
+# ╟─402f9139-c4a8-40bb-b1bb-1f5ee4403876
+# ╟─866cf5c5-fb81-47fd-a982-16c840be5e8d
+# ╟─83257936-e505-4f39-bed7-bfb681d5581b
+# ╟─51e52d1e-1f4e-4946-aecc-36605a7dc383
 # ╟─1c2ea3b1-0029-4719-aa7b-9a4a657c0e9b
+# ╟─ba44ebed-fc78-4a2e-bc3e-43217f37010a
 # ╟─a13bd2dd-d5c6-4dd7-8f83-a37301cd2125
 # ╟─13c6169f-1643-48a6-a296-be6116ed4272
-# ╟─27b6830c-45f7-417a-9053-567d3264030d
-# ╟─a653c3b5-c9e5-42d9-8014-2ccd38d8ff9f
+# ╠═27b6830c-45f7-417a-9053-567d3264030d
+# ╠═a653c3b5-c9e5-42d9-8014-2ccd38d8ff9f
 # ╟─ca522569-8c91-4608-9a94-9879451b7c08

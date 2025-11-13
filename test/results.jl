@@ -19,3 +19,7 @@ trnan = deepcopy(testratio)
 trnan.Mg .= NaN
 
 @test ratiosummary(testmeas,testratio,ratiocounts=ntest, minratios=4)[2] ≈ ratiosummary(testmeas,trnan)[2] 
+
+# test NamedTuple output
+
+@test ratiosummary(testmeas,testratio, NTout=true) isa NamedTuple
