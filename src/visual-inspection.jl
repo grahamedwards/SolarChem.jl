@@ -56,10 +56,10 @@ d = let
 end
 
 # ╔═╡ 1c2ea3b1-0029-4719-aa7b-9a4a657c0e9b
-@bind xmin PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(minimum(d), maximum(d), 100), show_value=true)
+@bind xmin PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(0.98minimum(d), maximum(d), 100), show_value=true)
 
 # ╔═╡ a13bd2dd-d5c6-4dd7-8f83-a37301cd2125
-@bind xmax PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(xmin, maximum(d), 100), default=maximum(d), show_value=true)
+@bind xmax PlutoUI.Slider(isempty(d) ? [0,1] : LinRange(xmin, 1.02maximum(d), 100), default=maximum(d), show_value=true)
 
 # ╔═╡ 13c6169f-1643-48a6-a296-be6116ed4272
 let 
