@@ -27,11 +27,11 @@ include("data-mgmt.jl")
 export ratiosummary, removefrom
 include("results.jl")
 
-export solarlogmix, solarmixmetropolis
+export cleanmetbase, cleanmetbase!, removemetbase, removemetbase!
+include("metbase.jl")
+
 include("mix.jl")
-
 include("classic-stats.jl")
-
 include("display.jl")
 
 function __init__()
