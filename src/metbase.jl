@@ -25,6 +25,7 @@ In place version of [`cleanmetbase`](@ref)
 function cleanmetbase!(x::NamedTuple)
     eachname = unique(x.name)
     allmetbase = findall(x -> occursin("MetBase", x), x.dataset)
+    pt = collect(periodictable())
 
     for i = eachindex(eachname)
 
@@ -38,7 +39,7 @@ function cleanmetbase!(x::NamedTuple)
         @inbounds for j in metbase
 
             els = ()
-            @inbounds for k in periodictable()
+            @inbounds for k in pt
                 els = (els..., ifelse(isnan(x[k][j]), (), (k,))...)
             end
 
@@ -90,8 +91,9 @@ In place version of [`removemetbase`](@ref)
 """
 function removemetbase!(x::NamedTuple)
      allmetbase = findall(x -> occursin("MetBase", x), x.dataset)
+     pt = collect(periodictable())
      @inbounds for i = allmetbase
-        @inbounds for k in periodictable()
+        @inbounds for k in pt
             x[k][i] = NaN
         end
      end
