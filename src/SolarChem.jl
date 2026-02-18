@@ -52,18 +52,17 @@ function inspect(filepath::AbstractString="")
         write(io, rvi)
     end
 
-    x = BonitoBook.book(cpath, openbrowser=false)
-
     printstyled("\nBonitoBook notebook created at: ", color=:magenta)
     println("$cpath\n")
     printstyled("Warning: ",color=:yellow)
     print("this notebook will be overwritten by future executions of ")
     printstyled("inspect()", color=:cyan)
-    println(". Save a copy to preserve any changes.\n")
-    printstyled("Notebook running at\n\n", bold=true)
-
-    println(string(x.protocol, x.url, ":", x.port, "/", notebookname))
-
+    println(". Save a copy to preserve any changes.\n\n")
+    #printstyled("Notebook running at\n\n", bold=true)
+    #println(string(x.protocol, x.url, ":", x.port, "/", notebookname))
+    
+    x = BonitoBook.book(cpath, openbrowser=false)
+    
     printstyled("\n\nCopy-paste the link above into your browser to start inspecting!\n\n", color=:magenta)
 
 end
