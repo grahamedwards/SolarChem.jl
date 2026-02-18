@@ -1,9 +1,10 @@
 name = "SolarChem"
 uuid = "9ef18092-565a-42fc-b100-617ad85a4fc1"
-authors = ["Graham Harper Edwards"]
 version = "0.1.0"
+authors = ["Graham Harper Edwards"]
 
 [deps]
+BonitoBook = "b416d416-7a6e-4336-8c1a-1f8a8cd59518"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 Downloads = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
@@ -16,6 +17,7 @@ Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 Term = "22787eb5-b846-44ae-b979-8e399b8463ab"
 
 [compat]
+BonitoBook = "0.2.0"
 Dates = "1.10"
 DelimitedFiles = "1"
 Downloads = "1.6.0"
