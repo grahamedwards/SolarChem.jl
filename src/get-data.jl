@@ -173,7 +173,7 @@ function astromatdata(; url::String="https://api.astromat.org/v4/search/results?
     out = NamedTuple{namesout}(dataout)
 
     if save
-        Serialization.serialize(save,out)
+        Serialization.serialize(filesavelocation,out)
         print("\nData saved locally to:")
         println(Term.@cyan Term.@bold filesavelocation)
     else
