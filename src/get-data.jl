@@ -5,7 +5,7 @@ Quickly load the most recently archived output from [`astromatdata`](@ref).
 """
 function fastromat()
     data, date = SolarChem.Serialization.deserialize(joinpath(@__DIR__,"..","data","astromat","fastromat.jls"));
-    printstyled("\nAstromat data accessed: ", Dates.format(date, "d u Y"), "\n\n"; color=:light_blue)
+    printstyled("\nAstromat data accessed: ", date, "\n\n"; color=:light_blue)
     data
 end
 
