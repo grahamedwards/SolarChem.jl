@@ -45,13 +45,13 @@ function printcitations(x, ii, y, el)
     nm, ct = x.name[i], x.citation[i]
     for i = eachindex(nm)
     citations = (citations..., ct[i])
-    report *= string(nm[i], " | [", ct[i], "](", ct[i], ")\n")   
+    report *= string(nm[i], " | [`", ct[i], "`](", ct[i], ")\n")   
     end
     report *= "\n\nUnique citations\n\n"
     uc = unique(citations)
     for i in eachindex(uc)
         uci = uc[i]
-        report *= "[$uci]($uci)\n"
+        report *= "[`$uci`]($uci)\n"
     end
     Markdown.parse(report)
 end
@@ -62,7 +62,7 @@ Run the cell below to generate the plot and then scroll down to check it out...
 
 ```julia (editor=true, logging=false, output=true)
 f = Mke.Figure()
-
+Mke.DataInspector(f)
 ax = Mke.Axis(f[1, 1])
 Mke.deactivate_interaction!(ax, :scrollzoom)
 Mke.deactivate_interaction!(ax, :rectanglezoom)
@@ -116,30 +116,34 @@ end
 Mke.notify(domainslider.interval)
 
 Mke.hist!(xgld, color=:gray50)
-return f
+f
 ```
 ## Instructions
 
 The histogram above is generated using the built-in interactivity of the [Makie](https://docs.makie.org/stable/) plotting package.
 
+
+### Group and element dropdowns
 Use the dropdown menus on the right to select the meteorite group and element you wish to examine. 
 
-Use the slider below the x-axis to adjust the domain of your histogram. 
-Click the circles at either end and drag them to focus on a specific region. 
-Note that bins outside the domain disappear!
+
+### Domain slider
+Use the slider below the x-axis to adjust the domain of your histogram.  Click the circles at either end and drag them to focus on a specific region.  Note that bins outside the domain disappear!
+
+### Datatips 
+Hovering over a histogram bar reveals a datatip that reports that bin's midpoint value (x) and count (y). While this does not provide the exact values within a bin, if you zoom enough for single count bins, it should provide a pretty close estimate.
+
+### Troubleshooting
+
+If the plot starts behaving strangely, try the following sequence:
+
+1. Select a new group and a new element.
+2. If that doesn't work, re-run the cell above (`Shift+Enter`) to refresh the plot. Unfortunately, this will reset the group and element to the default.
+3. If the dropdown selectors are unable to get you to the element/group pairing of interest, you can manually reset the defaults in the code for the plot above (lines 8-9). If you have to resort to this, please let me know!
 
 ### Tabulated data
 
 You can print the data shown on the plot by running the cell below (`Shift+Enter`). Remember to re-run the cell below after any interaction with the plot above to get the latest list of citations corresponding to visible data. 
-
-### Troubleshooting
-If the plot starts behaving strangely, try the following sequence:
-
-1. Select a new group and a new element. 
-2. If (1) doesn't work, re-run the cell above (`Shift+Enter`) to refresh the plot. Unfortunately, this will reset the group and element to the default. 
-3. If the dropdown selectors are unable to get you to the element/group pairing of interest, you can manually reset the defaults in the code for the plot above (lines 8-9). If you have to resort to this, please let me know! 
-# 
-
 ```julia (editor=true, logging=false, output=true)
 printcitations(xgrp[], igl[], domainslider.interval[], el[])
 ```
