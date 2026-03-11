@@ -127,7 +127,7 @@ function bootstrapelements(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}; re
     els = present
     x = NamedTuple{els}(Vector{Float64}(undef,n) for i = eachindex(els))
 
-    Polyester.@batch for i in eachindex(els)
+    @inbounds for i in eachindex(els) # multi-thread here to speed up?
         
         el = els[i] 
 
@@ -189,7 +189,7 @@ function bootstrapratios(n::Int, d::NamedTuple, els::Tuple{Vararg{Symbol}}, divi
 
     sdivisor = Symbol(:s,divisor)
 
-    Polyester.@batch for j in eachindex(els)
+    @inbounds for j in eachindex(els) # multi-thread here to speed up?
 
         el = els[j]
         sel = Symbol(:s,el)

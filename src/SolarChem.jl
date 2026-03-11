@@ -4,7 +4,6 @@ import  Random, Statistics, DelimitedFiles, Downloads, Serialization, Dates, # s
         Requires, # for data viz
         JSON3, # for handling data from astromat api
         Term, # to track astromat download progress
-        Polyester, # for speed
         BonitoBook # for inspecting data
 
 export periodictable, majors, heavysolar, lightsolar, mediumsolar, allsolar
